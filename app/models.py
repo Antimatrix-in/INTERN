@@ -407,7 +407,7 @@ class Internship(db.Model):
             'praveen@antimatrix.co.in': 'Praveen',
             'satishkumar@antimatrix.co.in': 'Satish Kumar',
             'rohit@antimatrix.co.in': 'Rohit',
-            'bharatbabu@antimatrix.co.in': 'Bharat Babu',
+            'bharatbabu@antimatrix.co.in': 'Bharath',
         }
         return names.get(m.email, m.full_name)
 

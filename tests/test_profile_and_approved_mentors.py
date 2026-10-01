@@ -35,16 +35,16 @@ class ProfileAndApprovedMentorsTestCase(unittest.TestCase):
         self.assertEqual(len(mentors), 4)
 
         expected = [
-            ('praveen@antimatrix.co.in', 'Praveen'),
-            ('satishkumar@antimatrix.co.in', 'Satish Kumar'),
-            ('rohit@antimatrix.co.in', 'Rohit'),
-            ('bharatbabu@antimatrix.co.in', 'Bharat Babu'),
+            ('praveen@antimatrix.co.in', 'Praveen', 'Praveen'),
+            ('satishkumar@antimatrix.co.in', 'Satish Kumar', 'Satish Kumar'),
+            ('rohit@antimatrix.co.in', 'Rohit', 'Rohit'),
+            ('bharatbabu@antimatrix.co.in', 'Bharat Babu', 'Bharath'),
         ]
-        for m, (exp_email, exp_name) in zip(mentors, expected):
+        for m, (exp_email, exp_db_name, exp_canonical_name) in zip(mentors, expected):
             self.assertEqual(m.email, exp_email)
-            self.assertEqual(m.full_name, exp_name)
+            self.assertEqual(m.full_name, exp_db_name)
             self.assertTrue(is_approved_mentor(m))
-            self.assertEqual(get_canonical_mentor_name(m), exp_name)
+            self.assertEqual(get_canonical_mentor_name(m), exp_canonical_name)
 
     def test_invalid_mentor_rejected(self):
         """Ensure Dr. Rajesh Sharma is never considered an approved mentor."""
@@ -290,7 +290,7 @@ class ProfileAndApprovedMentorsTestCase(unittest.TestCase):
             'Praveen': 'praveen@antimatrix.co.in',
             'Satish Kumar': 'satishkumar@antimatrix.co.in',
             'Rohit': 'rohit@antimatrix.co.in',
-            'Bharat Babu': 'bharathbabu@antimatrix.co.in',
+            'Bharath': 'bharath@antimatrix.co.in',
         }
         for name, expected_email in expected_mappings.items():
             self.assertEqual(get_canonical_mentor_email(name), expected_email)
@@ -307,7 +307,7 @@ class ProfileAndApprovedMentorsTestCase(unittest.TestCase):
         1. Praveen -> praveen@antimatrix.co.in
         2. Satish Kumar -> satishkumar@antimatrix.co.in
         3. Rohit -> rohit@antimatrix.co.in
-        4. Bharat Babu -> bharathbabu@antimatrix.co.in
+        4. Bharath -> bharath@antimatrix.co.in
         The employee dashboard dynamically displays mentor name and clickable mailto link.
         """
         user = User.query.filter_by(employee_id='AM-INT-2026-001').first()
@@ -322,7 +322,7 @@ class ProfileAndApprovedMentorsTestCase(unittest.TestCase):
             ('Praveen', 'praveen@antimatrix.co.in'),
             ('Satish Kumar', 'satishkumar@antimatrix.co.in'),
             ('Rohit', 'rohit@antimatrix.co.in'),
-            ('Bharat Babu', 'bharathbabu@antimatrix.co.in'),
+            ('Bharath', 'bharath@antimatrix.co.in'),
         ]
 
         for mentor_obj, (exp_name, exp_email) in zip(approved_mentors, expected):
@@ -398,7 +398,7 @@ class ProfileAndApprovedMentorsTestCase(unittest.TestCase):
         self.assertIn('href="mailto:praveen@antimatrix.co.in"', html1)
         self.client.get('/logout', follow_redirects=True)
 
-        # 2. Admin re-assigns to Bharat Babu
+        # 2. Admin re-assigns to Bharath
         self.client.post('/admin/login', data={'email_or_id': 'admin', 'password': 'Admin@12345'}, follow_redirects=True)
         resp2 = self.client.post(f'/admin/employees/{student.id}/assign-mentor', data={'mentor_id': bharat.id})
         self.assertEqual(resp2.status_code, 302)
@@ -408,9 +408,9 @@ class ProfileAndApprovedMentorsTestCase(unittest.TestCase):
         self.client.post('/login', data={'employee_id': user.employee_id, 'password': 'Student@2026Password!'})
         resp_emp2 = self.client.get('/dashboard')
         html2 = resp_emp2.get_data(as_text=True)
-        self.assertIn('Bharat Babu', html2)
-        self.assertIn('bharathbabu@antimatrix.co.in', html2)
-        self.assertIn('href="mailto:bharathbabu@antimatrix.co.in"', html2)
+        self.assertIn('Bharath', html2)
+        self.assertIn('bharath@antimatrix.co.in', html2)
+        self.assertIn('href="mailto:bharath@antimatrix.co.in"', html2)
 
 
 if __name__ == '__main__':

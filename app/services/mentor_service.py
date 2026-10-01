@@ -11,7 +11,7 @@ APPROVED_MENTOR_NAMES = {
     'praveen@antimatrix.co.in': 'Praveen',
     'satishkumar@antimatrix.co.in': 'Satish Kumar',
     'rohit@antimatrix.co.in': 'Rohit',
-    'bharatbabu@antimatrix.co.in': 'Bharat Babu',
+    'bharatbabu@antimatrix.co.in': 'Bharath',
 }
 
 
@@ -46,7 +46,7 @@ APPROVED_MENTOR_OFFICIAL_EMAILS = {
     'Praveen': 'praveen@antimatrix.co.in',
     'Satish Kumar': 'satishkumar@antimatrix.co.in',
     'Rohit': 'rohit@antimatrix.co.in',
-    'Bharat Babu': 'bharathbabu@antimatrix.co.in',
+    'Bharath': 'bharath@antimatrix.co.in',
 }
 
 
@@ -62,6 +62,8 @@ def get_canonical_mentor_email(mentor_or_name):
         name = mentor_or_name.strip()
         if name in APPROVED_MENTOR_OFFICIAL_EMAILS:
             return APPROVED_MENTOR_OFFICIAL_EMAILS[name]
+        if name in ('Bharat Babu', 'Bharat'):
+            return APPROVED_MENTOR_OFFICIAL_EMAILS.get('Bharath')
         if name in APPROVED_MENTOR_NAMES:
             canon_name = APPROVED_MENTOR_NAMES[name]
             return APPROVED_MENTOR_OFFICIAL_EMAILS.get(canon_name)
