@@ -1,0 +1,299 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Intelligent Project & Mentor Allocation — ANTI MATRIX{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem 2.5rem;">
+
+  <!-- Header -->
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+        <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.25); font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.65rem; border-radius: 999px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: pulse 2s infinite;"></span>
+          MODULE 4 ENGINE ACTIVE
+        </span>
+        <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+          Intelligent Allocation Hub
+        </h1>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">
+        Multi-dimensional skill matching, mentor capacity balancing, duration pool validation, and transactional allocations
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('admin.projects_list') }}" class="btn btn-secondary" style="font-weight: 700; font-size: 0.85rem;">
+        Project Directory
+      </a>
+      <a href="{{ url_for('admin.allocation_wizard') }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); background: #10B981; border-color: #059669;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        + Launch Allocation Wizard
+      </a>
+    </div>
+  </div>
+
+  <!-- Telemetry KPI Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <!-- Unallocated Interns -->
+    <div style="background: var(--bg-card); border: 1px solid {% if unallocated_students|length > 0 %}rgba(245, 158, 11, 0.3){% else %}var(--border-subtle){% endif %}; border-radius: 14px; padding: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Unallocated Interns</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{% if unallocated_students|length > 0 %}#F59E0B{% else %}#10B981{% endif %}" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div style="font-size: 1.8rem; font-weight: 900; color: {% if unallocated_students|length > 0 %}#FBBF24{% else %}var(--text-primary){% endif %};">
+        {{ unallocated_students|length }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+        {% if unallocated_students|length > 0 %}Action required: Needs project matching{% else %}All active interns allocated{% endif %}
+      </div>
+    </div>
+
+    <!-- Active Allocations -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Active Allocations</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <div style="font-size: 1.8rem; font-weight: 900; color: var(--text-primary);">
+        {{ active_assignments|length }}
+      </div>
+      <div style="font-size: 0.75rem; color: #10B981; margin-top: 0.35rem;">
+        Supervised project assignments
+      </div>
+    </div>
+
+    <!-- Available Projects -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Available Projects</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      </div>
+      <div style="font-size: 1.8rem; font-weight: 900; color: var(--text-primary);">
+        {{ available_projects|length }}
+      </div>
+      <div style="font-size: 0.75rem; color: #60A5FA; margin-top: 0.35rem;">
+        Active & ready for allocation
+      </div>
+    </div>
+
+    <!-- Available Mentors -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Available Mentors</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div style="font-size: 1.8rem; font-weight: 900; color: var(--text-primary);">
+        {{ available_mentors|length }}
+      </div>
+      <div style="font-size: 0.75rem; color: #A78BFA; margin-top: 0.35rem;">
+        Accepting new mentees
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 1. Unallocated Interns Section (Priority Queue) ────────────────────── -->
+  {% if unallocated_students %}
+  <div style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 14px; margin-bottom: 2rem; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+    <div style="padding: 1.1rem 1.5rem; background: rgba(245, 158, 11, 0.08); border-bottom: 1px solid rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; animation: pulse 1.5s infinite;"></span>
+        <h3 style="font-size: 0.95rem; font-weight: 800; color: #FBBF24; margin: 0;">Unallocated Interns Queue (Action Required)</h3>
+      </div>
+      <span style="font-size: 0.75rem; font-weight: 700; color: #F59E0B; background: rgba(245, 158, 11, 0.15); padding: 0.2rem 0.6rem; border-radius: 6px;">
+        {{ unallocated_students|length }} pending allocation
+      </span>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02);">
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Intern UID & Name</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Department & College</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Duration</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Skills Profile</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: right; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in unallocated_students %}
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+            <td style="padding: 1rem 1.25rem;">
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 0.9rem;">{{ student.user.full_name if student.user else 'Intern' }}</div>
+              <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #60A5FA;">{{ student.student_uid }}</div>
+            </td>
+            <td style="padding: 1rem 1.25rem;">
+              <div style="font-weight: 600; color: var(--text-primary);">{{ student.department.name if student.department else (student.user.department if student.user else 'General') }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">{{ student.college.name if student.college else 'Affiliated College' }}</div>
+            </td>
+            <td style="padding: 1rem 1.25rem;">
+              <span style="font-weight: 700; font-size: 0.8rem; {% if student.active_internship and student.active_internship.plan.duration_months == 3 %}color: #A78BFA;{% else %}color: #60A5FA;{% endif %}">
+                {{ student.active_internship.plan.duration_months if (student.active_internship and student.active_internship.plan) else 1 }} Month Track
+              </span>
+            </td>
+            <td style="padding: 1rem 1.25rem; max-width: 280px;">
+              {% if student.skills_list %}
+              <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
+                {% for s in student.skills_list[:3] %}
+                <span style="font-size: 0.68rem; font-family: var(--font-mono); background: rgba(16,185,129,0.12); color: #34D399; padding: 0.1rem 0.4rem; border-radius: 4px;">{{ s }}</span>
+                {% endfor %}
+                {% if student.skills_list|length > 3 %}
+                <span style="font-size: 0.68rem; color: var(--text-muted);">+{{ student.skills_list|length - 3 }}</span>
+                {% endif %}
+              </div>
+              {% else %}
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No skills specified</span>
+              {% endif %}
+            </td>
+            <td style="padding: 1rem 1.25rem; text-align: right;">
+              <a href="{{ url_for('admin.allocation_wizard', student_id=student.id) }}" class="btn btn-primary btn-sm" style="font-weight: 700; font-size: 0.75rem; background: #10B981; border-color: #059669; padding: 0.4rem 0.85rem;">
+                Match & Allocate &rarr;
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── 2. Active Allocations Directory ────────────────────────────────────── -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; margin-bottom: 2rem; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+    <div style="padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <h3 style="font-size: 1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Active Project & Mentor Allocations</h3>
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); background: rgba(255,255,255,0.06); padding: 0.15rem 0.55rem; border-radius: 999px;">
+          {{ active_assignments|length }} records
+        </span>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">Real-Time Allocation Registry</span>
+      </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; min-width: 950px; font-size: 0.85rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02);">
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Intern</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Allocated Project</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Assigned Mentor</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Match Score</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Current Stage</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Deadline</th>
+            <th style="padding: 0.9rem 1.25rem; text-align: right; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in active_assignments %}
+          {% set student = a.internship.student %}
+          {% set project = a.project %}
+          {% set mentor = a.internship.assigned_mentor %}
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 1rem 1.25rem;">
+              <a href="{{ url_for('admin.student_detail', student_id=student.id) }}" style="text-decoration: none;">
+                <div style="font-weight: 700; color: var(--text-primary); font-size: 0.88rem;">{{ student.user.full_name if student.user else 'Intern' }}</div>
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #60A5FA;">{{ student.student_uid }}</div>
+              </a>
+            </td>
+            <td style="padding: 1rem 1.25rem; max-width: 250px;">
+              <div style="font-weight: 700; color: var(--text-primary);">{{ project.title }}</div>
+              <div style="display: flex; gap: 0.4rem; align-items: center; margin-top: 0.2rem;">
+                <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #60A5FA; background: rgba(59,130,246,0.12); padding: 0.1rem 0.4rem; border-radius: 4px;">{{ project.project_code }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-muted);">{{ project.duration_months }}M</span>
+              </div>
+            </td>
+            <td style="padding: 1rem 1.25rem;">
+              {% if mentor %}
+              <div style="font-weight: 700; color: var(--text-primary);">{{ a.internship.assigned_mentor_name }}</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">{{ a.internship.assigned_mentor_email }}</div>
+              {% else %}
+              <span style="font-size: 0.75rem; color: #F59E0B; font-weight: 700;">Unassigned</span>
+              {% endif %}
+            </td>
+            <td style="padding: 1rem 1.25rem;">
+              <span style="font-family: var(--font-mono); font-weight: 800; font-size: 0.85rem; color: #10B981; background: rgba(16,185,129,0.12); padding: 0.2rem 0.55rem; border-radius: 6px; border: 1px solid rgba(16,185,129,0.25);">
+                {{ a._cached_match_score }}% Match
+              </span>
+            </td>
+            <td style="padding: 1rem 1.25rem;">
+              <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">
+                {{ a.internship.current_stage or 'Week 1' }}
+              </span>
+            </td>
+            <td style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">
+              {{ a.deadline or 'TBD' }}
+            </td>
+            <td style="padding: 1rem 1.25rem; text-align: right; white-space: nowrap;">
+              <a href="{{ url_for('admin.allocation_wizard', student_id=student.id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 700;">
+                Reallocate
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="padding: 3rem 1rem; text-align: center; color: var(--text-muted);">
+              No active allocations recorded. Use the Allocation Wizard to allocate interns to projects.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 3. Allocation History & Overrides Audit Log ────────────────────────── -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+    <div style="padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+      <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Recent Allocation & Override History
+      </h3>
+      <span style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">Immutable Audit Trail</span>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02);">
+            <th style="padding: 0.8rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); font-size: 0.72rem;">Timestamp</th>
+            <th style="padding: 0.8rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); font-size: 0.72rem;">Actor</th>
+            <th style="padding: 0.8rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); font-size: 0.72rem;">Action</th>
+            <th style="padding: 0.8rem 1.25rem; text-align: left; font-weight: 700; color: var(--text-muted); font-size: 0.72rem;">Allocation Details & Override Rationale</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in recent_allocations %}
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <td style="padding: 0.8rem 1.25rem; font-family: var(--font-mono); color: var(--text-muted); white-space: nowrap;">
+              {{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '—' }}
+            </td>
+            <td style="padding: 0.8rem 1.25rem; font-weight: 600; color: var(--text-primary);">
+              {{ log.actor.full_name if log.actor else 'System' }}
+            </td>
+            <td style="padding: 0.8rem 1.25rem;">
+              <span style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 4px; background: rgba(16,185,129,0.12); color: #34D399;">
+                {{ log.action }}
+              </span>
+            </td>
+            <td style="padding: 0.8rem 1.25rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem;">
+              {{ log.details_json or log.details or '—' }}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" style="padding: 2rem 1rem; text-align: center; color: var(--text-muted);">
+              No allocation audit records found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

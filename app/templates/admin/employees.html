@@ -1,128 +1,227 @@
 {% extends 'admin/base_admin.html' %}
 
-{% block title %}Employees — {% if current_duration == '1' %}1 Month Track{% elif current_duration == '3' %}3 Months Track{% else %}Active Employees{% endif %} — ANTI MATRIX{% endblock %}
+{% block title %}Intern Directory — ANTI MATRIX Admin{% endblock %}
 
 {% block content %}
 <div style="padding: 2rem 2.5rem;">
 
   <!-- Header -->
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <div>
       <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
-        <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin: 0;">
-          {% if current_duration == '1' %}
-          1 Month Active Employees
+        <h1 style="font-size: 1.65rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+          {% if current_status and current_status != 'ALL' %}
+            {{ current_status | title }} Interns Directory
+          {% elif current_duration == '1' %}
+            1 Month Interns Directory
           {% elif current_duration == '3' %}
-          3 Months Active Employees
+            3 Months Interns Directory
           {% else %}
-          Active Employees Directory
+            Internship Management Directory
           {% endif %}
         </h1>
         <span style="background: rgba(59, 130, 246, 0.12); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.25); font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.65rem; border-radius: 999px;">
-          {{ students|length }} Active Interns
+          {{ count_active }} Active Interns
         </span>
       </div>
       <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">
-        Manage currently active employees enrolled across project and professional internship tracks
+        Comprehensive directory of all enrolled interns across project and professional internship tracks
       </p>
     </div>
 
     <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-      <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+      <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        + Create Employee
+        + Register Intern
       </a>
-      <button type="button" id="btnOpenDeleteAllModal" class="btn" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.6rem 1.15rem; border-radius: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'; this.style.borderColor='rgba(239, 68, 68, 0.6)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'; this.style.borderColor='rgba(239, 68, 68, 0.35)';">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      <button type="button" id="btnOpenDeleteAllModal" class="btn" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; background: rgba(239, 68, 68, 0.12); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.6rem 1.15rem; border-radius: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.12)';">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         Delete All Employees
       </button>
     </div>
   </div>
 
-  <!-- Duration Filter Tabs -->
-  <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-    <a href="{{ url_for('admin.employees_list', duration='1', q=search_query if search_query else None) }}"
-       style="display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.15rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: all 0.2s;
-              {% if current_duration == '1' %}
-              background: linear-gradient(135deg, #3B82F6, #2563EB); color: #FFFFFF; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  <!-- KPI Status Pills Filter Row -->
+  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+    <!-- All Interns -->
+    <a href="{{ url_for('admin.employees_list', status='ALL', duration=current_duration if current_duration else None, q=search_query if search_query else None) }}"
+       style="display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: all 0.15s;
+              {% if current_status == 'ALL' or not current_status and not request.args.get('duration') %}
+              background: var(--text-primary); color: var(--bg-surface);
               {% else %}
-              background: rgba(255, 255, 255, 0.04); color: var(--text-muted); border: 1px solid var(--border-subtle);
+              background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-subtle);
               {% endif %}">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      1 MONTH
-      <span style="font-size: 0.75rem; padding: 0.1rem 0.45rem; border-radius: 999px; {% if current_duration == '1' %}background: rgba(255,255,255,0.25); color: #FFF;{% else %}background: rgba(255,255,255,0.08); color: var(--text-muted);{% endif %}">
-        {{ count_1m }}
+      All Interns
+      <span style="font-size: 0.72rem; padding: 0.1rem 0.4rem; border-radius: 999px; {% if current_status == 'ALL' or not current_status and not request.args.get('duration') %}background: rgba(255,255,255,0.25); color: #FFF;{% else %}background: rgba(255,255,255,0.06); color: var(--text-muted);{% endif %}">
+        {{ total_interns_count }}
       </span>
     </a>
 
-    <a href="{{ url_for('admin.employees_list', duration='3', q=search_query if search_query else None) }}"
-       style="display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.15rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: all 0.2s;
-              {% if current_duration == '3' %}
-              background: linear-gradient(135deg, #8B5CF6, #7C3AED); color: #FFFFFF; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+    <!-- Active -->
+    <a href="{{ url_for('admin.employees_list', status='ACTIVE', duration=current_duration if current_duration else None, q=search_query if search_query else None) }}"
+       style="display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: all 0.15s;
+              {% if current_status == 'ACTIVE' %}
+              background: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.4);
               {% else %}
-              background: rgba(255, 255, 255, 0.04); color: var(--text-muted); border: 1px solid var(--border-subtle);
+              background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-subtle);
               {% endif %}">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      3 MONTHS
-      <span style="font-size: 0.75rem; padding: 0.1rem 0.45rem; border-radius: 999px; {% if current_duration == '3' %}background: rgba(255,255,255,0.25); color: #FFF;{% else %}background: rgba(255,255,255,0.08); color: var(--text-muted);{% endif %}">
-        {{ count_3m }}
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #34D399;"></span>
+      Active
+      <span style="font-size: 0.72rem; padding: 0.1rem 0.4rem; border-radius: 999px; background: rgba(16, 185, 129, 0.15); color: #34D399;">
+        {{ count_active }}
       </span>
     </a>
 
-    <a href="{{ url_for('admin.employees_list', q=search_query if search_query else None) }}"
-       style="display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: all 0.2s;
-              {% if not current_duration %}
-              background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3);
+    <!-- Allocated -->
+    <a href="{{ url_for('admin.employees_list', status='ALLOCATED', duration=current_duration if current_duration else None, q=search_query if search_query else None) }}"
+       style="display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: all 0.15s;
+              {% if current_status == 'ALLOCATED' %}
+              background: rgba(59, 130, 246, 0.2); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.4);
               {% else %}
-              background: transparent; color: var(--text-muted);
+              background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-subtle);
               {% endif %}">
-      All Active
-      <span style="font-size: 0.75rem; padding: 0.1rem 0.45rem; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--text-muted);">
-        {{ count_all }}
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #60A5FA;"></span>
+      Allocated
+      <span style="font-size: 0.72rem; padding: 0.1rem 0.4rem; border-radius: 999px; background: rgba(59, 130, 246, 0.15); color: #60A5FA;">
+        {{ count_allocated }}
       </span>
     </a>
+
+    <!-- Onboarding -->
+    <a href="{{ url_for('admin.employees_list', status='ONBOARDING', duration=current_duration if current_duration else None, q=search_query if search_query else None) }}"
+       style="display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: all 0.15s;
+              {% if current_status == 'ONBOARDING' %}
+              background: rgba(245, 158, 11, 0.2); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.4);
+              {% else %}
+              background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-subtle);
+              {% endif %}">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #FBBF24;"></span>
+      Onboarding
+      <span style="font-size: 0.72rem; padding: 0.1rem 0.4rem; border-radius: 999px; background: rgba(245, 158, 11, 0.15); color: #FBBF24;">
+        {{ count_onboarding }}
+      </span>
+    </a>
+
+    <!-- Completed -->
+    <a href="{{ url_for('admin.employees_list', status='COMPLETED', duration=current_duration if current_duration else None, q=search_query if search_query else None) }}"
+       style="display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: all 0.15s;
+              {% if current_status == 'COMPLETED' %}
+              background: rgba(139, 92, 246, 0.2); color: #A78BFA; border: 1px solid rgba(139, 92, 246, 0.4);
+              {% else %}
+              background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-subtle);
+              {% endif %}">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #A78BFA;"></span>
+      Completed
+      <span style="font-size: 0.72rem; padding: 0.1rem 0.4rem; border-radius: 999px; background: rgba(139, 92, 246, 0.15); color: #A78BFA;">
+        {{ count_completed }}
+      </span>
+    </a>
+
+    <!-- Archived -->
+    <a href="{{ url_for('admin.employees_list', status='ARCHIVED', duration=current_duration if current_duration else None, q=search_query if search_query else None) }}"
+       style="display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: all 0.15s;
+              {% if current_status == 'ARCHIVED' %}
+              background: rgba(100, 116, 139, 0.25); color: #CBD5E1; border: 1px solid rgba(100, 116, 139, 0.4);
+              {% else %}
+              background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-subtle);
+              {% endif %}">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #94A3B8;"></span>
+      Archived
+      <span style="font-size: 0.72rem; padding: 0.1rem 0.4rem; border-radius: 999px; background: rgba(100, 116, 139, 0.15); color: #94A3B8;">
+        {{ count_archived }}
+      </span>
+    </a>
+
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 0.5rem;">
+      <!-- Duration Pills -->
+      <a href="{{ url_for('admin.employees_list', duration='1', status=current_status if current_status else None, q=search_query if search_query else None) }}"
+         style="padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none;
+                {% if current_duration == '1' %}background: linear-gradient(135deg, #3B82F6, #2563EB); color: #FFF;{% else %}background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-subtle);{% endif %}">
+        1M Track ({{ count_1m }})
+      </a>
+      <a href="{{ url_for('admin.employees_list', duration='3', status=current_status if current_status else None, q=search_query if search_query else None) }}"
+         style="padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none;
+                {% if current_duration == '3' %}background: linear-gradient(135deg, #8B5CF6, #7C3AED); color: #FFF;{% else %}background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-subtle);{% endif %}">
+        3M Track ({{ count_3m }})
+      </a>
+    </div>
   </div>
 
-  <!-- Search Box -->
-  <form method="get" style="margin-bottom: 1.5rem;">
-    {% if current_duration %}
-    <input type="hidden" name="duration" value="{{ current_duration }}">
-    {% endif %}
-    <div style="display: flex; gap: 0.75rem;">
-      <div style="position: relative; flex: 1;">
-        <svg style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  <!-- Search & Filter Controls -->
+  <form method="get" action="{{ url_for('admin.employees_list') }}" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 0.75rem; align-items: center;">
+      <!-- Search Input -->
+      <div style="position: relative;">
+        <svg style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" name="q" value="{{ search_query }}"
-               placeholder="Search by Employee ID, Name, Application ID, College, Department, or Email..."
-               style="width: 100%; padding: 0.7rem 1rem 0.7rem 2.75rem; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; color: var(--text-primary); font-size: 0.875rem; outline: none; font-family: var(--font-sans); box-sizing: border-box;">
+               placeholder="Search by ID, Name, Email, College, Dept, Application..."
+               style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.85rem 0.65rem 2.5rem; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.85rem; outline: none;">
       </div>
-      <button type="submit" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.4rem; padding: 0 1.25rem;">
-        Search
-      </button>
-      {% if search_query %}
-      <a href="{{ url_for('admin.employees_list', duration=current_duration if current_duration else None) }}" class="btn btn-secondary">Clear</a>
-      {% endif %}
+
+      <!-- College Filter -->
+      <div>
+        <select name="college_id" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.85rem; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.85rem; outline: none;">
+          <option value="">All Colleges</option>
+          {% for c in colleges %}
+            <option value="{{ c.id }}" {% if current_college_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Sort By -->
+      <div>
+        <select name="sort_by" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.85rem; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.85rem; outline: none;">
+          <option value="id" {% if sort_by == 'id' %}selected{% endif %}>Sort by ID</option>
+          <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort by Name</option>
+          <option value="start_date" {% if sort_by == 'start_date' %}selected{% endif %}>Sort by Start Date</option>
+          <option value="status" {% if sort_by == 'status' %}selected{% endif %}>Sort by Status</option>
+          <option value="progress" {% if sort_by == 'progress' %}selected{% endif %}>Sort by Progress</option>
+        </select>
+      </div>
+
+      <!-- Order -->
+      <div>
+        <select name="order" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.85rem; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.85rem; outline: none;">
+          <option value="desc" {% if order == 'desc' %}selected{% endif %}>Descending</option>
+          <option value="asc" {% if order == 'asc' %}selected{% endif %}>Ascending</option>
+        </select>
+      </div>
+
+      <!-- Submit & Reset -->
+      <div style="display: flex; gap: 0.5rem;">
+        {% if current_status %}
+          <input type="hidden" name="status" value="{{ current_status }}">
+        {% endif %}
+        {% if current_duration %}
+          <input type="hidden" name="duration" value="{{ current_duration }}">
+        {% endif %}
+        <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1rem; font-weight: 700; font-size: 0.85rem;">
+          Filter
+        </button>
+        {% if search_query or current_college_id or current_status or current_duration %}
+          <a href="{{ url_for('admin.employees_list') }}" class="btn btn-secondary" style="padding: 0.65rem 0.85rem; font-size: 0.85rem;" title="Clear Filters">
+            Clear
+          </a>
+        {% endif %}
+      </div>
     </div>
   </form>
 
-  <!-- Employee Database Table -->
-  <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow-x: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
-    <table style="width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 0.85rem;">
+  <!-- Intern Directory Table -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow-x: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.15); margin-bottom: 1.5rem;">
+    <table style="width: 100%; border-collapse: collapse; min-width: 1250px; font-size: 0.85rem;">
       <thead>
         <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02);">
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; white-space: nowrap;">Employee ID</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Name</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Application ID</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">College</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Department</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Email</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; white-space: nowrap;">Start Date</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; white-space: nowrap;">End Date</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Project</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; white-space: nowrap;">Project ID</th>
-          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; white-space: nowrap;">Current Week</th>
+          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; white-space: nowrap;">Intern ID</th>
+          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Full Name</th>
+          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Contact Details</th>
+          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Institution & Dept</th>
+          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Assigned Project</th>
+          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Mentor</th>
+          <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; white-space: nowrap;">Timeline</th>
           <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Progress</th>
           <th style="padding: 1rem 1.15rem; text-align: left; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Status</th>
-          <th style="padding: 1rem 1.15rem; text-align: right; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Action</th>
+          <th style="padding: 1rem 1.15rem; text-align: right; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem;">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -132,7 +231,7 @@
         {% set app_record = student.first_application %}
         <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;" onmouseover="this.style.background='rgba(59,130,246,0.03)'" onmouseout="this.style.background='transparent'">
           
-          <!-- Employee ID -->
+          <!-- Intern ID -->
           <td style="padding: 1rem 1.15rem; white-space: nowrap;">
             <a href="{{ url_for('admin.employee_detail', student_id=student.id) }}" style="text-decoration: none;">
               <span style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: #60A5FA; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); padding: 0.25rem 0.6rem; border-radius: 6px;">
@@ -141,89 +240,72 @@
             </a>
           </td>
 
-          <!-- Name -->
+          <!-- Full Name -->
           <td style="padding: 1rem 1.15rem;">
-            <div style="font-weight: 600; color: var(--text-primary); white-space: nowrap;">
-              {{ student.user.full_name }}
+            <div style="font-weight: 700; color: var(--text-primary); white-space: nowrap;">
+              <a href="{{ url_for('admin.employee_detail', student_id=student.id) }}" style="color: inherit; text-decoration: none;" onmouseover="this.style.color='#60A5FA'" onmouseout="this.style.color='inherit'">
+                {{ student.user.full_name }}
+              </a>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+              {{ student.degree }} • {{ student.current_year }}
+            </div>
+          </td>
+
+          <!-- Contact Details -->
+          <td style="padding: 1rem 1.15rem;">
+            <div style="color: var(--text-primary); font-size: 0.8rem; white-space: nowrap;">
+              {{ student.user.email }}
             </div>
             <div style="font-size: 0.72rem; color: var(--text-muted);">
-              {{ student.degree }}
+              {{ student.user.phone or '—' }}
             </div>
           </td>
 
-          <!-- Application ID -->
-          <td style="padding: 1rem 1.15rem; white-space: nowrap;">
-            {% if app_record %}
-            <span style="font-family: var(--font-mono); font-size: 0.78rem; color: #A78BFA; background: rgba(139,92,246,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;">
-              {{ app_record.application_no }}
-            </span>
-            {% else %}
-            <span style="color: var(--text-muted); font-size: 0.75rem;">—</span>
-            {% endif %}
-          </td>
-
-          <!-- College -->
-          <td style="padding: 1rem 1.15rem; max-width: 180px;">
-            <div style="font-weight: 500; color: var(--text-primary); line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ student.college.name if student.college else 'N/A' }}">
+          <!-- Institution & Department -->
+          <td style="padding: 1rem 1.15rem; max-width: 200px;">
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ student.college.name if student.college else 'N/A' }}">
               {{ student.college.name if student.college else 'N/A' }}
             </div>
-          </td>
-
-          <!-- Department -->
-          <td style="padding: 1rem 1.15rem; max-width: 150px;">
-            <div style="color: var(--text-muted); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ student.department.name if student.department else 'N/A' }}">
+            <div style="color: var(--text-muted); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ student.department.name if student.department else 'N/A' }}">
               {{ student.department.name if student.department else 'N/A' }}
             </div>
           </td>
 
-          <!-- Email -->
-          <td style="padding: 1rem 1.15rem;">
-            <div style="color: var(--text-muted); font-size: 0.78rem; white-space: nowrap;">
-              {{ student.user.email }}
-            </div>
-          </td>
-
-          <!-- Internship Start Date -->
-          <td style="padding: 1rem 1.15rem; white-space: nowrap; color: var(--text-muted); font-size: 0.78rem;">
-            {{ internship.start_date if internship else '—' }}
-          </td>
-
-          <!-- Internship End Date -->
-          <td style="padding: 1rem 1.15rem; white-space: nowrap; color: var(--text-muted); font-size: 0.78rem;">
-            {{ internship.end_date if internship else '—' }}
-          </td>
-
-          <!-- Project -->
+          <!-- Assigned Project -->
           <td style="padding: 1rem 1.15rem; max-width: 200px;">
             {% if assignment and assignment.project %}
             <div style="font-weight: 600; color: #60A5FA; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ assignment.project.title }}">
               {{ assignment.project.title }}
             </div>
-            {% else %}
-            <span style="color: var(--text-muted); font-style: italic; font-size: 0.78rem;">Not Assigned</span>
-            {% endif %}
-          </td>
-
-          <!-- Project ID -->
-          <td style="padding: 1rem 1.15rem; white-space: nowrap;">
-            {% if assignment and assignment.project %}
-            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #34D399; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); padding: 0.15rem 0.5rem; border-radius: 4px;">
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #34D399; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); padding: 0.1rem 0.4rem; border-radius: 4px;">
               {{ assignment.project.project_code }}
             </span>
             {% else %}
-            <span style="color: var(--text-muted);">—</span>
+            <a href="{{ url_for('admin.assign_project_to_student', student_id=student.id) }}" style="font-size: 0.75rem; color: #FBBF24; text-decoration: none; font-weight: 600;">
+              + Assign Project
+            </a>
             {% endif %}
           </td>
 
-          <!-- Current Week -->
+          <!-- Mentor -->
           <td style="padding: 1rem 1.15rem; white-space: nowrap;">
-            {% if internship %}
-            <span style="font-size: 0.78rem; color: var(--text-primary); font-weight: 600; background: rgba(255,255,255,0.06); padding: 0.2rem 0.5rem; border-radius: 4px;">
-              {{ internship.current_stage or 'Week 1' }}
-            </span>
+            {% if internship and internship.assigned_mentor %}
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.82rem;">
+              {{ internship.assigned_mentor_name }}
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">
+              {{ internship.assigned_mentor.email }}
+            </div>
             {% else %}
-            <span style="color: var(--text-muted);">—</span>
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">Pending Mentor</span>
             {% endif %}
+          </td>
+
+          <!-- Timeline -->
+          <td style="padding: 1rem 1.15rem; white-space: nowrap; font-size: 0.78rem; color: var(--text-muted);">
+            <div>{{ internship.start_date if internship else '—' }}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); opacity: 0.8;">to {{ internship.end_date if internship else '—' }}</div>
           </td>
 
           <!-- Progress -->
@@ -237,48 +319,67 @@
             </div>
           </td>
 
-          <!-- Status -->
+          <!-- Lifecycle Status -->
           <td style="padding: 1rem 1.15rem; white-space: nowrap;">
-            {% if internship and internship.status == 'ACTIVE' %}
+            {% set st = internship.status if internship else 'INACTIVE' %}
+            {% if st == 'ACTIVE' %}
             <span style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; background: rgba(16,185,129,0.12); color: #34D399; border: 1px solid rgba(16,185,129,0.25); display: inline-flex; align-items: center; gap: 0.35rem;">
               <span style="width: 6px; height: 6px; border-radius: 50%; background: #34D399;"></span>
               Active
             </span>
-            {% elif internship %}
-            <span style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; background: rgba(100,116,139,0.12); color: #94A3B8;">
-              {{ internship.status }}
+            {% elif st == 'ALLOCATED' %}
+            <span style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; background: rgba(59,130,246,0.12); color: #60A5FA; border: 1px solid rgba(59,130,246,0.25); display: inline-flex; align-items: center; gap: 0.35rem;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #60A5FA;"></span>
+              Allocated
+            </span>
+            {% elif st == 'ONBOARDING' or st == 'REGISTERED' %}
+            <span style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; background: rgba(245,158,11,0.12); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); display: inline-flex; align-items: center; gap: 0.35rem;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #FBBF24;"></span>
+              {{ st | title }}
+            </span>
+            {% elif st == 'COMPLETED' %}
+            <span style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; background: rgba(139,92,246,0.12); color: #A78BFA; border: 1px solid rgba(139,92,246,0.25); display: inline-flex; align-items: center; gap: 0.35rem;">
+              Completed
+            </span>
+            {% elif st == 'ARCHIVED' %}
+            <span style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700; background: rgba(100,116,139,0.15); color: #94A3B8; border: 1px solid rgba(100,116,139,0.3);">
+              Archived
             </span>
             {% else %}
-            <span style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; background: rgba(100,116,139,0.12); color: #94A3B8; font-weight: 700;">INACTIVE</span>
+            <span style="font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 999px; background: rgba(100,116,139,0.12); color: #94A3B8; font-weight: 700;">
+              {{ st }}
+            </span>
             {% endif %}
           </td>
 
-          <!-- Action -->
+          <!-- Actions -->
           <td style="padding: 1rem 1.15rem; text-align: right; white-space: nowrap;">
-            <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
-              <a href="{{ url_for('admin.assign_project_to_student', student_id=student.id) }}" class="btn btn-primary btn-sm" style="font-weight: 700; font-size: 0.75rem; padding: 0.35rem 0.75rem; letter-spacing: 0.03em;">
-                ASSIGN PROJECT
-              </a>
-              <a href="{{ url_for('admin.employee_detail', student_id=student.id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.6rem;">
+            <div style="display: flex; justify-content: flex-end; gap: 0.35rem;">
+              <a href="{{ url_for('admin.employee_detail', student_id=student.id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;">
                 View
+              </a>
+              <a href="{{ url_for('admin.edit_employee', student_id=student.id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;">
+                Edit
               </a>
             </div>
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="14" style="padding: 3.5rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          <td colspan="10" style="padding: 3.5rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
             {% if search_query %}
-            No active employees matching query "{{ search_query }}" in this view.
+            No intern records matching query "{{ search_query }}" in this view.
+            {% elif current_status %}
+            No intern records with status "{{ current_status }}" found.
             {% elif current_duration == '1' %}
-            No active 1-Month employees found.
+            No active 1-Month interns found.
             {% elif current_duration == '3' %}
-            No active 3-Month employees found.
+            No active 3-Month interns found.
             {% else %}
-            No active employees currently enrolled.
+            No intern records currently enrolled in the directory.
             {% endif %}
             <div style="margin-top: 0.75rem;">
-              <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary btn-sm">+ Create New Employee</a>
+              <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary btn-sm">+ Register New Intern</a>
             </div>
           </td>
         </tr>
@@ -287,7 +388,49 @@
     </table>
   </div>
 
-  <!-- Delete All Employees Two-Stage Confirmation Modal -->
+  <!-- Pagination Component -->
+  {% if pagination and pagination.pages > 1 %}
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted);">
+      Showing Page <strong>{{ pagination.page }}</strong> of <strong>{{ pagination.pages }}</strong> (Total: {{ pagination.total }} records)
+    </div>
+
+    <div style="display: flex; gap: 0.35rem; align-items: center;">
+      {% if pagination.has_prev %}
+      <a href="{{ url_for('admin.employees_list', page=pagination.prev_num, q=search_query if search_query else None, status=current_status if current_status else None, duration=current_duration if current_duration else None, college_id=current_college_id if current_college_id else None, sort_by=sort_by, order=order) }}"
+         class="btn btn-secondary btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">
+        ← Previous
+      </a>
+      {% endif %}
+
+      {% for p_num in pagination.iter_pages(left_edge=2, left_current=2, right_current=2, right_edge=2) %}
+        {% if p_num %}
+          {% if p_num == pagination.page %}
+          <span style="padding: 0.4rem 0.75rem; font-size: 0.8rem; font-weight: 700; border-radius: 6px; background: #3B82F6; color: #FFF;">
+            {{ p_num }}
+          </span>
+          {% else %}
+          <a href="{{ url_for('admin.employees_list', page=p_num, q=search_query if search_query else None, status=current_status if current_status else None, duration=current_duration if current_duration else None, college_id=current_college_id if current_college_id else None, sort_by=sort_by, order=order) }}"
+             class="btn btn-secondary btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">
+            {{ p_num }}
+          </a>
+          {% endif %}
+        {% else %}
+          <span style="color: var(--text-muted); padding: 0 0.35rem;">…</span>
+        {% endif %}
+      {% endfor %}
+
+      {% if pagination.has_next %}
+      <a href="{{ url_for('admin.employees_list', page=pagination.next_num, q=search_query if search_query else None, status=current_status if current_status else None, duration=current_duration if current_duration else None, college_id=current_college_id if current_college_id else None, sort_by=sort_by, order=order) }}"
+         class="btn btn-secondary btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">
+        Next →
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Delete All Employees Two-Stage Confirmation Modal (Preserved for backward safety) -->
   <div id="deleteAllModalBackdrop" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
     <div style="background: #111827; border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 16px; max-width: 500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85); overflow: hidden;">
       
@@ -405,7 +548,6 @@
       });
     }
 
-    // Exact phrase check (case-sensitive, no whitespace normalization)
     if (confirmInput && btnFinalSubmit) {
       confirmInput.addEventListener('input', function() {
         if (confirmInput.value === 'DELETE ALL EMPLOYEES') {
@@ -420,7 +562,6 @@
       });
     }
 
-    // Close on backdrop click (outside card)
     if (modalBackdrop) {
       modalBackdrop.addEventListener('click', function(e) {
         if (e.target === modalBackdrop) {
@@ -429,7 +570,6 @@
       });
     }
 
-    // Close on Escape
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && modalBackdrop && modalBackdrop.style.display === 'flex') {
         closeModal();

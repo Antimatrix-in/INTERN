@@ -1,0 +1,147 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Edit Mentor Profile — {{ mentor.full_name }} | Anti-Matrix Enterprise{% endblock %}
+
+{% block content %}
+<div class="space-y-6" style="max-width: 900px; margin: 0 auto;">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between pb-3 border-bottom" style="border-color: var(--border-light) !important;">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <a href="{{ url_for('admin.mentors_list') }}" class="text-xs text-muted text-decoration-none hover-emerald d-inline-flex align-items-center gap-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Back to Mentor Directory
+        </a>
+      </div>
+      <h1 class="h3 font-weight-bold text-dark mb-1" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">Edit Mentor Profile</h1>
+      <p class="text-sm text-muted mb-0">Modify professional information, department classification, skills, and supervisory capacity limits.</p>
+    </div>
+
+    <!-- Mentor ID Badge -->
+    <div class="text-end">
+      <div class="text-xs font-weight-bold text-muted text-uppercase" style="letter-spacing: 0.05em;">MENTOR ID</div>
+      <span class="badge font-mono py-1.5 px-2.5 text-xs font-weight-bold" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald); border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8125rem;">
+        {{ mentor.employee_id or ('AM-MTR-' ~ mentor.id) }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Edit Card -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden" style="border: 1px solid var(--border-light) !important;">
+    <div class="card-header bg-light py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--border-light) !important;">
+      <div class="d-flex align-items-center gap-2">
+        <div class="rounded-2 p-1.5 d-flex align-items-center justify-center text-white" style="background: var(--brand-emerald);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        </div>
+        <div>
+          <div class="font-weight-bold text-dark" style="font-size: 0.9375rem;">Modify Supervisory Account</div>
+          <div class="text-xs text-muted">All modifications will be recorded in the system audit history</div>
+        </div>
+      </div>
+      <span class="badge bg-white border text-dark text-xs font-mono">User ID: {{ mentor.id }}</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.edit_mentor', mentor_id=mentor.id) }}" class="p-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Section 1: Personal & Contact -->
+      <div class="mb-4">
+        <h6 class="text-xs font-weight-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.05em;">
+          1. Identity & Contact Details
+        </h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Full Legal Name <span class="text-danger">*</span></label>
+            <input type="text" name="full_name" class="form-control form-control-sm" value="{{ mentor.full_name }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Corporate Email Address <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control form-control-sm" value="{{ mentor.email }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Contact Phone</label>
+            <input type="tel" name="phone" class="form-control form-control-sm" value="{{ mentor.phone or '' }}" placeholder="+91 98765 43210">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Reset Password (Optional)</label>
+            <input type="text" name="new_password" class="form-control form-control-sm font-mono" placeholder="Leave blank to preserve existing password">
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4" style="border-color: #f1f5f9;">
+
+      <!-- Section 2: Department & Designation -->
+      <div class="mb-4">
+        <h6 class="text-xs font-weight-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.05em;">
+          2. Department, Role & Technical Skills
+        </h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Department / Domain <span class="text-danger">*</span></label>
+            <input type="text" name="department" class="form-control form-control-sm" value="{{ mentor.department or 'Engineering' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Designation</label>
+            <input type="text" name="designation" class="form-control form-control-sm" value="{{ mentor.designation or 'Technical Mentor' }}">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label text-xs font-weight-bold text-dark">Technical Skills & Expertise (Comma-separated)</label>
+            <input type="text" name="skills" class="form-control form-control-sm" value="{{ mentor.skills or 'Full-Stack Development' }}">
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4" style="border-color: #f1f5f9;">
+
+      <!-- Section 3: Capacity & Availability -->
+      <div class="mb-4">
+        <h6 class="text-xs font-weight-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.05em;">
+          3. Supervisory Capacity & Account Governance
+        </h6>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label text-xs font-weight-bold text-dark">Maximum Intern Capacity <span class="text-danger">*</span></label>
+            <input type="number" name="max_capacity" class="form-control form-control-sm" min="1" max="50" value="{{ mentor.max_capacity or 5 }}" required>
+            <div class="text-xs text-muted mt-1">Currently assigned: {{ mentor.active_interns_count }} active mentees</div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label text-xs font-weight-bold text-dark">Availability Status</label>
+            <select name="availability_status" class="form-select form-select-sm">
+              <option value="AVAILABLE" {% if mentor.availability_status == 'AVAILABLE' %}selected{% endif %}>AVAILABLE</option>
+              <option value="BUSY" {% if mentor.availability_status == 'BUSY' %}selected{% endif %}>BUSY</option>
+              <option value="ON_LEAVE" {% if mentor.availability_status == 'ON_LEAVE' %}selected{% endif %}>ON LEAVE</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label text-xs font-weight-bold text-dark">Account Login Access</label>
+            <div class="form-check form-switch mt-1">
+              <input class="form-check-input" type="checkbox" name="is_active" value="1" id="isActiveCheck" {% if mentor.is_active %}checked{% endif %}>
+              <label class="form-check-label text-xs font-weight-semibold" for="isActiveCheck">
+                {% if mentor.is_active %}Active (Sign-in enabled){% else %}Inactive (Access blocked){% endif %}
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex align-items-center justify-content-end gap-2 pt-3 border-top" style="border-color: var(--border-light) !important;">
+        <a href="{{ url_for('admin.mentors_list') }}" class="btn btn-sm btn-light border px-3">Cancel</a>
+        <button type="submit" class="btn btn-sm btn-primary px-4 font-weight-bold shadow-sm" style="background: var(--brand-emerald); border-color: var(--brand-emerald);">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

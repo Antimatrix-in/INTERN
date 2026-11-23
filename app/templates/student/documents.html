@@ -1,124 +1,417 @@
 {% extends 'student/base_student.html' %}
 
-{% block title %}Internship Documents — ANTI MATRIX{% endblock %}
+{% block title %}Internship Documents & Digital Credentials — ANTI MATRIX{% endblock %}
+{% block breadcrumb_title %}Documents & Credentials{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.35rem;">Internship Credentials & Documents</h1>
-  <p style="color: var(--text-muted); font-size: 0.925rem;">
-    Official corporate credentials issued by ANTI MATRIX across your onboarding, active milestones, and program completion.
-  </p>
+<div class="workspace-documents" style="display: flex; flex-direction: column; gap: 2rem;">
+
+  <!-- Header -->
+  <header class="page-top-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 class="page-main-title" style="font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.5rem; letter-spacing: -0.02em;">
+        Corporate Credentials & Digital Documents
+      </h1>
+      <p class="page-main-subtitle" style="font-size: 0.9rem; color: var(--text-muted); margin: 0; max-width: 720px; line-height: 1.5;">
+        Official digitally signed corporate records, appointment orders, verified completion certificates, and submitted onboarding documentation.
+      </p>
+    </div>
+    {% if certificate_ver and certificate_ver.is_valid %}
+      <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 12px; padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px #10B981;"></div>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #10B981; letter-spacing: 0.05em;">Digital Certificate Verified</div>
+          <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono);">{{ certificate_ver.certificate_no }}</div>
+        </div>
+      </div>
+    {% endif %}
+  </header>
+
+  <!-- Certificate Eligibility Tracker Banner -->
+  <div class="card" style="background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(3,10,7,0.4)); border: 1px solid rgba(16,185,129,0.2); border-radius: 14px; padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; align-items: flex-start; gap: 1rem;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        </div>
+        <div>
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.25rem;">
+            Completion Certificate Eligibility Status
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+            {{ eligibility.reason }}
+          </p>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div style="text-align: right;">
+          <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Milestones Approved</div>
+          <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary);" class="mono">
+            {{ eligibility.approved_milestones }} / {{ eligibility.total_milestones }}
+          </div>
+        </div>
+        <div style="min-width: 110px;">
+          <div style="height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden;">
+            <div style="height: 100%; border-radius: 999px; background: {% if eligibility.is_eligible %}#10B981{% else %}#3B82F6{% endif %}; width: {{ eligibility.completion_percentage }}%;"></div>
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-align: right; margin-top: 0.25rem;" class="mono">
+            {{ eligibility.completion_percentage }}% Complete
+          </div>
+        </div>
+        <div>
+          {% if certificate_ver and certificate_ver.is_valid %}
+            <span class="status-badge" style="background: rgba(16,185,129,0.2); color: #34D399; font-weight: 700; border: 1px solid rgba(16,185,129,0.3); padding: 0.4rem 0.8rem; border-radius: 8px;">
+              ✓ ISSUED & VERIFIED
+            </span>
+          {% elif eligibility.is_eligible %}
+            <span class="status-badge" style="background: rgba(16,185,129,0.15); color: #10B981; font-weight: 700; border: 1px solid rgba(16,185,129,0.25); padding: 0.4rem 0.8rem; border-radius: 8px;">
+              ★ ELIGIBLE FOR ISSUANCE
+            </span>
+          {% else %}
+            <span class="status-badge" style="background: rgba(148,163,184,0.1); color: var(--text-muted); font-weight: 600; padding: 0.4rem 0.8rem; border-radius: 8px;">
+              IN PROGRESS
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: CORPORATE ISSUED CREDENTIALS -->
+  <section>
+    <div style="margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Official Issued Documents & Certificates
+      </h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+        Corporate letters and authentic tamper-proof credentials generated by the Anti-Matrix Engineering Board.
+      </p>
+    </div>
+
+    {% set offer_doc = None %}
+    {% set join_doc = None %}
+    {% set cert_doc = None %}
+    {% set exp_doc = None %}
+    {% set agr_doc = None %}
+
+    {% for d in issued_documents %}
+      {% if d.doc_type == 'OFFER_LETTER' and not offer_doc %}{% set offer_doc = d %}{% endif %}
+      {% if d.doc_type == 'JOINING_LETTER' and not join_doc %}{% set join_doc = d %}{% endif %}
+      {% if d.doc_type == 'CERTIFICATE' and not cert_doc %}{% set cert_doc = d %}{% endif %}
+      {% if d.doc_type == 'EXPERIENCE_LETTER' and not exp_doc %}{% set exp_doc = d %}{% endif %}
+      {% if d.doc_type == 'INTERNSHIP_AGREEMENT' and not agr_doc %}{% set agr_doc = d %}{% endif %}
+    {% endfor %}
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem;">
+
+      <!-- 1. Offer Letter -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); display: flex; align-items: center; justify-content: center; color: #60A5FA;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+            </div>
+            {% if offer_doc %}
+              <span class="status-badge" style="background: rgba(16,185,129,0.15); color: #34D399; font-weight: 700; font-size: 0.72rem;">ISSUED</span>
+            {% else %}
+              <span class="status-badge" style="background: rgba(148,163,184,0.1); color: var(--text-muted); font-size: 0.72rem;">NOT ISSUED YET</span>
+            {% endif %}
+          </div>
+
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem;">Official Offer Letter</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem; line-height: 1.45;">
+            Formal appointment credential specifying stipend/track terms, program objectives, and project assignment scope.
+          </p>
+
+          {% if offer_doc %}
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem;" class="mono">
+              Ref: <strong style="color: var(--text-primary);">{{ offer_doc.document_no }}</strong><br/>
+              Issued: {{ offer_doc.issued_at.strftime('%B %d, %Y') if offer_doc.issued_at else 'Recent' }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div>
+          {% if offer_doc %}
+            <div style="display: flex; gap: 0.5rem;">
+              <a href="{{ url_for('student.download_document', doc_no=offer_doc.document_no) }}" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center; gap: 0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PDF
+              </a>
+              <a href="{{ url_for('student.preview_document', doc_no=offer_doc.document_no) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Preview in browser">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </a>
+            </div>
+          {% else %}
+            <button type="button" disabled class="btn btn-secondary btn-sm btn-block" style="opacity: 0.5; cursor: not-allowed;">
+              Awaiting Admin Generation
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 2. Joining Letter -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.25); display: flex; align-items: center; justify-content: center; color: #22D3EE;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+            </div>
+            {% if join_doc %}
+              <span class="status-badge" style="background: rgba(16,185,129,0.15); color: #34D399; font-weight: 700; font-size: 0.72rem;">ISSUED</span>
+            {% else %}
+              <span class="status-badge" style="background: rgba(148,163,184,0.1); color: var(--text-muted); font-size: 0.72rem;">NOT ISSUED YET</span>
+            {% endif %}
+          </div>
+
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem;">Official Joining Letter</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem; line-height: 1.45;">
+            Formal induction confirmation containing assigned Employee ID ({{ student.student_uid }}), reporting mentor, and commencement timestamp.
+          </p>
+
+          {% if join_doc %}
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem;" class="mono">
+              Ref: <strong style="color: var(--text-primary);">{{ join_doc.document_no }}</strong><br/>
+              Issued: {{ join_doc.issued_at.strftime('%B %d, %Y') if join_doc.issued_at else 'Recent' }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div>
+          {% if join_doc %}
+            <div style="display: flex; gap: 0.5rem;">
+              <a href="{{ url_for('student.download_document', doc_no=join_doc.document_no) }}" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center; gap: 0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PDF
+              </a>
+              <a href="{{ url_for('student.preview_document', doc_no=join_doc.document_no) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Preview in browser">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </a>
+            </div>
+          {% else %}
+            <button type="button" disabled class="btn btn-secondary btn-sm btn-block" style="opacity: 0.5; cursor: not-allowed;">
+              Awaiting Admin Generation
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 3. Completion Certificate -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid {% if cert_doc %}rgba(16,185,129,0.4){% else %}var(--border-subtle){% endif %}; border-radius: 14px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; {% if cert_doc %}box-shadow: 0 4px 20px rgba(16,185,129,0.08);{% endif %}">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); display: flex; align-items: center; justify-content: center; color: #10B981;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            </div>
+            {% if cert_doc %}
+              {% if cert_doc.status == 'REVOKED' %}
+                <span class="status-badge" style="background: rgba(239,68,68,0.15); color: #EF4444; font-weight: 700; font-size: 0.72rem;">REVOKED</span>
+              {% else %}
+                <span class="status-badge" style="background: rgba(16,185,129,0.2); color: #34D399; font-weight: 700; font-size: 0.72rem;">★ ISSUED</span>
+              {% endif %}
+            {% elif eligibility.is_eligible %}
+              <span class="status-badge" style="background: rgba(16,185,129,0.1); color: #10B981; font-size: 0.72rem;">READY FOR APPROVAL</span>
+            {% else %}
+              <span class="status-badge" style="background: rgba(148,163,184,0.1); color: var(--text-muted); font-size: 0.72rem;">REQUIREMENTS PENDING</span>
+            {% endif %}
+          </div>
+
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem;">Internship Completion Certificate</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem; line-height: 1.45;">
+            Tamper-proof verifiable completion certificate with embedded cryptographic QR code linking to public registry.
+          </p>
+
+          {% if cert_doc %}
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem;" class="mono">
+              Cert No: <strong style="color: #10B981;">{{ cert_doc.document_no }}</strong><br/>
+              Issued: {{ cert_doc.issued_at.strftime('%B %d, %Y') if cert_doc.issued_at else 'Recent' }}
+              {% if cert_doc.status == 'REVOKED' %}
+                <div style="color: #EF4444; margin-top: 0.25rem;">Reason: {{ cert_doc.revocation_reason or 'Revoked by board.' }}</div>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div>
+          {% if cert_doc and cert_doc.status != 'REVOKED' %}
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="display: flex; gap: 0.5rem;">
+                <a href="{{ url_for('student.download_document', doc_no=cert_doc.document_no) }}" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center; gap: 0.4rem;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download Certificate
+                </a>
+                <a href="{{ url_for('student.preview_document', doc_no=cert_doc.document_no) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Preview Certificate">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </a>
+              </div>
+              <a href="{{ url_for('main.verify_certificate', certificate_id=cert_doc.document_no) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm btn-block" style="font-size: 0.75rem; justify-content: center; gap: 0.4rem;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Open Public Verification Page
+              </a>
+            </div>
+          {% else %}
+            <button type="button" disabled class="btn btn-secondary btn-sm btn-block" style="opacity: 0.5; cursor: not-allowed;">
+              {% if eligibility.is_eligible %}Awaiting Admin Issuance{% else %}Locked (Pending Milestones){% endif %}
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 4. Experience Letter -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25); display: flex; align-items: center; justify-content: center; color: #C084FC;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            {% if exp_doc %}
+              <span class="status-badge" style="background: rgba(16,185,129,0.15); color: #34D399; font-weight: 700; font-size: 0.72rem;">ISSUED</span>
+            {% else %}
+              <span class="status-badge" style="background: rgba(148,163,184,0.1); color: var(--text-muted); font-size: 0.72rem;">NOT ISSUED YET</span>
+            {% endif %}
+          </div>
+
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem;">Official Experience Letter</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1rem; line-height: 1.45;">
+            Official company experience credential summarizing project achievements, duration completed, and engineering ratings.
+          </p>
+
+          {% if exp_doc %}
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem;" class="mono">
+              Ref: <strong style="color: var(--text-primary);">{{ exp_doc.document_no }}</strong><br/>
+              Issued: {{ exp_doc.issued_at.strftime('%B %d, %Y') if exp_doc.issued_at else 'Recent' }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div>
+          {% if exp_doc %}
+            <div style="display: flex; gap: 0.5rem;">
+              <a href="{{ url_for('student.download_document', doc_no=exp_doc.document_no) }}" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center; gap: 0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PDF
+              </a>
+              <a href="{{ url_for('student.preview_document', doc_no=exp_doc.document_no) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Preview in browser">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </a>
+            </div>
+          {% else %}
+            <button type="button" disabled class="btn btn-secondary btn-sm btn-block" style="opacity: 0.5; cursor: not-allowed;">
+              Available Upon Completion
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 2: STUDENT UPLOADED VERIFICATION DOCUMENTS -->
+  <section style="margin-top: 1rem;">
+    <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; align-items: flex-start;">
+
+      <!-- Upload Form Card -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload Verification Document
+        </h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1.25rem;">
+          Upload your resume, college identification card, or authorized identity proof. Permitted formats: PDF, PNG, JPG, DOCX (Max 10MB).
+        </p>
+
+        <form method="POST" action="{{ url_for('student.upload_document') }}" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1rem;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase;">
+              Document Category
+            </label>
+            <select name="doc_type" required class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary);">
+              <option value="RESUME">Resume / Curriculum Vitae</option>
+              <option value="COLLEGE_ID">College Student ID Card</option>
+              <option value="AADHAAR">Authorized Identity Proof (Aadhaar/Govt ID)</option>
+              <option value="AGREEMENT">Signed Internship Agreement</option>
+              <option value="OTHER">Other Academic Credential</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase;">
+              Select File
+            </label>
+            <input type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.docx" class="form-control" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top: 0.5rem; justify-content: center; gap: 0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Document
+          </button>
+        </form>
+      </div>
+
+      <!-- Uploaded Documents History Table -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Your Uploaded Document Records
+        </h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 1.25rem;">
+          Track administrative review and approval status for all submitted onboarding documents.
+        </p>
+
+        {% if uploaded_documents %}
+          <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+            {% for doc in uploaded_documents %}
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                  <div style="font-weight: 700; color: var(--text-primary); font-size: 0.9rem; margin-bottom: 0.2rem;">
+                    {{ doc.file_name }}
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">
+                    Type: <strong style="color: #60A5FA;">{{ doc.doc_type }}</strong> &bull;
+                    Size: {{ (doc.file_size / 1024) | round(1) }} KB &bull;
+                    Uploaded: {{ doc.uploaded_at.strftime('%d %b %Y') if doc.uploaded_at else 'Recent' }}
+                  </div>
+                  {% if doc.rejection_reason %}
+                    <div style="font-size: 0.75rem; color: #EF4444; margin-top: 0.35rem; background: rgba(239,68,68,0.1); padding: 0.3rem 0.6rem; border-radius: 6px;">
+                      ⚠️ Reason: {{ doc.rejection_reason }}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  {% if doc.status == 'APPROVED' %}
+                    <span class="status-badge" style="background: rgba(16,185,129,0.15); color: #34D399; font-weight: 700; font-size: 0.75rem;">✓ APPROVED</span>
+                  {% elif doc.status == 'REJECTED' %}
+                    <span class="status-badge" style="background: rgba(239,68,68,0.15); color: #EF4444; font-weight: 700; font-size: 0.75rem;">✕ REJECTED</span>
+                  {% elif doc.status == 'RE_UPLOAD_REQUIRED' %}
+                    <span class="status-badge" style="background: rgba(245,158,11,0.15); color: #F59E0B; font-weight: 700; font-size: 0.75rem;">RE-UPLOAD NEEDED</span>
+                  {% else %}
+                    <span class="status-badge" style="background: rgba(59,130,246,0.12); color: #60A5FA; font-weight: 700; font-size: 0.75rem;">UNDER REVIEW</span>
+                  {% endif %}
+
+                  <a href="{{ url_for('student.download_uploaded_document', doc_id=doc.id) }}" class="btn btn-secondary btn-sm" title="Download Document" style="padding: 0.35rem 0.65rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </a>
+                  <a href="{{ url_for('student.preview_uploaded_document', doc_id=doc.id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Preview Document" style="padding: 0.35rem 0.65rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="padding: 3rem; text-align: center; border: 1px dashed var(--border-subtle); border-radius: 12px; color: var(--text-muted); font-size: 0.85rem;">
+            No documents uploaded yet. Submit your Resume or College ID card using the form on the left.
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </section>
+
 </div>
-
-<!-- Documents Grid (Sample Placeholders for Phase 1) -->
-<div class="grid-2">
-  <!-- Card 1: Offer Letter -->
-  <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
-      <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); display: flex; align-items: center; justify-content: center; color: var(--info);">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-      </div>
-      <span class="status-badge badge-locked">Coming Soon</span>
-    </div>
-
-    <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">Official Offer Letter</h3>
-    <p style="color: var(--text-muted); font-size: 0.885rem; line-height: 1.5; margin-bottom: 1.5rem;">
-      Formal corporate internship selection document detailing stipend/track terms, program objectives, and project assignment scope.
-    </p>
-
-    <button onclick="showDocModal('Official Offer Letter', 'Official Offer Letter generation will be available soon.')" class="btn btn-secondary btn-sm btn-block">
-      Offer Letter (Coming Soon)
-    </button>
-  </div>
-
-  <!-- Card 2: Joining Letter -->
-  <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
-      <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.25); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
-      </div>
-      <span class="status-badge badge-locked">Coming Soon</span>
-    </div>
-
-    <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">Official Joining Letter</h3>
-    <p style="color: var(--text-muted); font-size: 0.885rem; line-height: 1.5; margin-bottom: 1.5rem;">
-      Formal induction credentials containing your allocated Employee ID ({{ student.student_uid }}), reporting mentor, and commencement timestamp.
-    </p>
-
-    <button onclick="showDocModal('Official Joining Letter', 'Official Joining Letter generation will be available soon.')" class="btn btn-secondary btn-sm btn-block">
-      Joining Letter (Coming Soon)
-    </button>
-  </div>
-
-  <!-- Card 3: Completion Certificate -->
-  <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
-      <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); display: flex; align-items: center; justify-content: center; color: var(--primary-light);">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
-      </div>
-      <span class="status-badge badge-locked">Coming Soon</span>
-    </div>
-
-    <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">Internship Completion Certificate</h3>
-    <p style="color: var(--text-muted); font-size: 0.885rem; line-height: 1.5; margin-bottom: 1.5rem;">
-      Tamper-proof verifiable completion certificate with unique cryptographic hash and public QR verification link. Issued upon final milestone approval.
-    </p>
-
-    <button onclick="showDocModal('Internship Completion Certificate', 'Completion Certificate generation will be available soon after project completion.')" class="btn btn-secondary btn-sm btn-block">
-      Completion Certificate (Coming Soon)
-    </button>
-  </div>
-
-  <!-- Card 4: Experience Letter -->
-  <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
-      <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.25); display: flex; align-items: center; justify-content: center; color: var(--accent-purple);">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-      </div>
-      <span class="status-badge badge-locked">Coming Soon</span>
-    </div>
-
-    <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">Official Experience Letter</h3>
-    <p style="color: var(--text-muted); font-size: 0.885rem; line-height: 1.5; margin-bottom: 1.5rem;">
-      Official company experience credential summarizing project achievements, duration completed, and mentor ratings.
-    </p>
-
-    <button onclick="showDocModal('Official Experience Letter', 'Official Experience Letter generation will be available soon.')" class="btn btn-secondary btn-sm btn-block">
-      Experience Letter (Coming Soon)
-    </button>
-  </div>
-</div>
-
-<!-- Document Placeholder Modal -->
-<div id="sampleDocModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
-  <div style="background: var(--bg-surface); border-radius: var(--radius-md); padding: 1.75rem; max-width: 480px; width: 100%; box-shadow: var(--shadow-xl); border: 1px solid var(--border-subtle);">
-    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-      <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: var(--info); display: flex; align-items: center; justify-content: center;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-      </div>
-      <h3 id="sampleDocTitle" style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin: 0;">Document Preview</h3>
-    </div>
-    <p id="sampleDocMessage" style="color: var(--text-muted); font-size: 0.925rem; line-height: 1.6; margin-bottom: 1.5rem;">
-      Document generation will be available after the required milestone evaluation and program approval.
-    </p>
-    <div style="display: flex; justify-content: flex-end;">
-      <button onclick="closeDocModal()" class="btn btn-primary btn-sm">Understood</button>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-  function showDocModal(title, statusText) {
-    document.getElementById('sampleDocTitle').innerText = title;
-    document.getElementById('sampleDocMessage').innerText = statusText || "Document generation will be available after the required approval/completion.";
-    var modal = document.getElementById('sampleDocModal');
-    modal.style.display = 'flex';
-  }
-  function closeDocModal() {
-    var modal = document.getElementById('sampleDocModal');
-    modal.style.display = 'none';
-  }
-</script>
 {% endblock %}

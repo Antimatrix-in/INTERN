@@ -1,0 +1,275 @@
+{% extends "mentor/base_mentor.html" %}
+
+{% block title %}{{ student.user.full_name }} — Mentee Supervision Profile | Anti-Matrix Enterprise{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Breadcrumb -->
+  <div class="d-flex align-items-center gap-2 mb-2">
+    <a href="{{ url_for('mentor.interns') }}" class="text-xs text-muted text-decoration-none hover-emerald d-inline-flex align-items-center gap-1">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      Assigned Interns
+    </a>
+    <span class="text-muted text-xs">/</span>
+    <span class="text-xs text-dark font-weight-bold">{{ student.user.full_name }}</span>
+  </div>
+
+  <!-- Mentee Hero Card -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden p-4 bg-white" style="border: 1px solid var(--border-light) !important;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-3 d-flex align-items-center justify-content-center font-weight-bold shadow-sm text-white" style="width: 58px; height: 58px; background: #0F172A; font-size: 1.25rem; font-weight: 800;">
+          {{ student.user.full_name[:2]|upper }}
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <h2 class="h4 font-weight-bold text-dark mb-0" style="font-weight: 800;">{{ student.user.full_name }}</h2>
+            <span class="badge font-mono" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald); border: 1px solid rgba(16, 185, 129, 0.25);">{{ student.student_uid or student.user.employee_id }}</span>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--brand-emerald);">{{ internship.status }}</span>
+            <span class="badge bg-light text-dark border text-xs">{{ internship.plan.name if internship and internship.plan else 'Project Track' }}</span>
+          </div>
+          <div class="text-xs text-muted mt-1 d-flex flex-wrap gap-3">
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>{{ student.user.email }}</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>{{ student.college.name if student.college else 'Institution' }} • {{ student.department.name if student.department else 'Engineering' }}</span>
+            {% if internship %}
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>{{ internship.start_date }} → {{ internship.end_date }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 shadow-xs" data-bs-toggle="modal" data-bs-target="#scheduleMeetingModal" style="background: #fff;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Schedule Sync
+        </button>
+        <a href="{{ url_for('mentor.submissions') }}" class="btn btn-sm btn-primary shadow-xs" style="background: var(--brand-emerald); border-color: var(--brand-emerald);">
+          Review Submissions
+        </a>
+      </div>
+    </div>
+
+    <!-- Active Project Banner -->
+    {% if assignment and assignment.project %}
+    <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-color: #f1f5f9 !important;">
+      <div>
+        <span class="text-xs text-muted font-weight-bold text-uppercase">Project Track:</span>
+        <strong class="text-dark ms-1">{{ assignment.project.title }}</strong>
+        <span class="badge font-mono ms-1 text-xs" style="background: #f1f5f9; color: #475569;">{{ assignment.project.project_code }}</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-xs text-muted">Overall Velocity:</span>
+        <strong class="text-success text-xs">{{ internship.progress_percent }}% Completed</strong>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Tabbed Supervision Interface -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white" style="border: 1px solid var(--border-light) !important;">
+    <div class="card-header bg-light p-0 border-bottom" style="border-color: var(--border-light) !important;">
+      <ul class="nav nav-tabs border-0 px-3 pt-2 text-xs" id="menteeTabs" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active font-weight-bold py-2 px-3" id="milestones-tab" data-bs-toggle="tab" data-bs-target="#milestones-pane" type="button" role="tab">
+            Weekly Milestones ({{ milestones|length }})
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link font-weight-bold py-2 px-3" id="submissions-tab" data-bs-toggle="tab" data-bs-target="#submissions-pane" type="button" role="tab">
+            Submissions & Code Repos ({{ submissions|length }})
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link font-weight-bold py-2 px-3" id="evaluations-tab" data-bs-toggle="tab" data-bs-target="#evaluations-pane" type="button" role="tab">
+            Evaluations & Feedback ({{ evaluations|length }})
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link font-weight-bold py-2 px-3" id="meetings-tab" data-bs-toggle="tab" data-bs-target="#meetings-pane" type="button" role="tab">
+            Sync Meetings ({{ meetings|length }})
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="tab-content p-4" id="menteeTabsContent">
+      <!-- 1. Milestones Roadmap Pane -->
+      <div class="tab-pane fade show active" id="milestones-pane" role="tabpanel">
+        <div class="space-y-3">
+          {% for m in milestones %}
+          <div class="p-3 rounded-3 border d-flex flex-wrap justify-content-between align-items-center gap-3 {% if m.status in ['COMPLETED', 'APPROVED'] %}bg-success-subtle border-success-subtle{% elif m.status in ['SUBMITTED', 'UNDER_REVIEW'] %}bg-warning-subtle border-warning-subtle{% else %}bg-light border{% endif %}">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle d-flex align-items-center justify-content-center font-weight-bold {% if m.status in ['COMPLETED', 'APPROVED'] %}bg-success text-white{% else %}bg-secondary text-white{% endif %}" style="width: 32px; height: 32px; font-size: 0.8125rem;">
+                {{ m.week_number }}
+              </div>
+              <div>
+                <div class="font-weight-bold text-dark text-xs">{{ m.title }}</div>
+                <div class="text-xs text-muted">{{ m.objective[:100] }}...</div>
+                <div class="text-xs text-muted mt-1">
+                  Tasks: {{ m.completed_tasks_count }} / {{ m.total_tasks_count }} completed
+                  {% if m.due_at %} • Due: {{ m.due_at.strftime('%d %b %Y') }}{% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge {% if m.status in ['COMPLETED', 'APPROVED'] %}bg-success text-white{% elif m.status in ['SUBMITTED', 'UNDER_REVIEW'] %}bg-warning text-dark{% elif m.status in ['REVISION_REQUIRED', 'REDO_REQUIRED'] %}bg-danger text-white{% else %}bg-light text-muted border{% endif %}">
+                {{ m.status }}
+              </span>
+
+              {% if m.latest_submission and m.status in ['SUBMITTED', 'UNDER_REVIEW', 'REVISION_REQUIRED', 'REDO_REQUIRED'] %}
+              <a href="{{ url_for('mentor.review_submission', submission_id=m.latest_submission.id) }}" class="btn btn-xs btn-primary font-weight-bold" style="background: var(--brand-emerald); border-color: var(--brand-emerald);">
+                Evaluate Deliverables
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted text-xs">No milestones configured for this project assignment.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 2. Submissions Pane -->
+      <div class="tab-pane fade" id="submissions-pane" role="tabpanel">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 text-xs">
+            <thead class="bg-light text-muted text-uppercase" style="font-size: 0.6875rem;">
+              <tr>
+                <th class="py-2.5 px-3">Milestone</th>
+                <th class="py-2.5 px-3">Submitted Links</th>
+                <th class="py-2.5 px-3">Date</th>
+                <th class="py-2.5 px-3">Status</th>
+                <th class="py-2.5 px-3 text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              {% for s in submissions %}
+              <tr>
+                <td class="py-2.5 px-3">
+                  <span class="font-weight-bold text-dark">Week {{ s.milestone.week_number }}</span>: {{ s.milestone.title }}
+                </td>
+                <td class="py-2.5 px-3">
+                  <div class="d-flex align-items-center gap-2">
+                    {% if s.effective_repo_url %}
+                    <a href="{{ s.effective_repo_url }}" target="_blank" class="text-primary text-decoration-none">GitHub Repo</a>
+                    {% endif %}
+                    {% if s.effective_video_path %}
+                    <a href="{{ s.effective_video_path }}" target="_blank" class="text-success text-decoration-none">Demo Video</a>
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="py-2.5 px-3 text-muted">{{ s.submitted_at.strftime('%d %b %Y') if s.submitted_at else '' }}</td>
+                <td class="py-2.5 px-3">
+                  <span class="badge {% if s.status in ['APPROVED', 'COMPLETED'] %}bg-success text-white{% elif s.status in ['SUBMITTED', 'UNDER_REVIEW'] %}bg-warning text-dark{% else %}bg-secondary text-white{% endif %}">{{ s.status }}</span>
+                </td>
+                <td class="py-2.5 px-3 text-end">
+                  <a href="{{ url_for('mentor.review_submission', submission_id=s.id) }}" class="btn btn-xs btn-outline-secondary">Review</a>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="py-3 text-center text-muted">No submissions uploaded yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. Evaluations Pane -->
+      <div class="tab-pane fade" id="evaluations-pane" role="tabpanel">
+        <div class="space-y-3">
+          {% for ev in evaluations %}
+          <div class="p-3 bg-light rounded-3 border">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge {% if ev.result == 'PASSED' %}bg-success text-white{% else %}bg-warning text-dark{% endif %} me-2">{{ ev.result }}</span>
+                <strong class="text-dark text-xs">{{ ev.milestone.title if ev.milestone else 'Milestone Evaluation' }}</strong>
+              </div>
+              <span class="badge font-mono bg-dark text-white text-xs">Score: {{ ev.total_score or 'N/A' }}/100</span>
+            </div>
+            <p class="text-xs text-muted mt-2 mb-1">Feedback: "{{ ev.feedback or ev.remarks or 'Reviewed by mentor.' }}"</p>
+            <div class="text-muted text-xs" style="font-size: 0.65rem;">Recorded on {{ ev.evaluated_at.strftime('%d %b %Y %H:%M') if ev.evaluated_at else '' }}</div>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted text-xs">No formal evaluations recorded yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 4. Sync Meetings Pane -->
+      <div class="tab-pane fade" id="meetings-pane" role="tabpanel">
+        <div class="space-y-3">
+          {% for m in meetings %}
+          <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
+            <div>
+              <div class="font-weight-bold text-dark text-xs">{{ m.title }}</div>
+              <div class="text-xs text-muted">{{ m.meeting_date }} at {{ m.meeting_time }}</div>
+              {% if m.meeting_notes %}<div class="text-xs text-muted mt-1">{{ m.meeting_notes }}</div>{% endif %}
+            </div>
+            {% if m.meeting_link %}
+            <a href="{{ m.meeting_link }}" target="_blank" class="btn btn-xs btn-outline-primary">Join Call</a>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted text-xs">No mentorship meetings currently scheduled.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Schedule Meeting Modal -->
+<div class="modal fade" id="scheduleMeetingModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      <div class="modal-header bg-light border-bottom py-3">
+        <h5 class="modal-title font-weight-bold text-dark h6 mb-0">Schedule Mentorship Evaluation Sync</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="{{ url_for('mentor.schedule_meeting') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="student_id" value="{{ student.id }}">
+
+        <div class="modal-body p-4 space-y-3">
+          <div>
+            <label class="form-label text-xs font-weight-bold text-dark">Meeting Title *</label>
+            <input type="text" name="title" class="form-control form-control-sm" value="Weekly Milestone Evaluation Session" required>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label text-xs font-weight-bold text-dark">Date *</label>
+              <input type="date" name="meeting_date" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-xs font-weight-bold text-dark">Time *</label>
+              <input type="time" name="meeting_time" class="form-control form-control-sm" value="16:00" required>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label text-xs font-weight-bold text-dark">Video Conference Link</label>
+            <input type="url" name="meeting_link" class="form-control form-control-sm" value="https://meet.google.com/anti-matrix-mentorship">
+          </div>
+
+          <div>
+            <label class="form-label text-xs font-weight-bold text-dark">Agenda / Sync Notes</label>
+            <textarea name="meeting_notes" class="form-control form-control-sm" rows="3" placeholder="Topics for discussion, questions regarding milestone tasks..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light border-top py-2 px-3">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary font-weight-bold" style="background: var(--brand-emerald); border-color: var(--brand-emerald);">
+            Schedule Sync
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

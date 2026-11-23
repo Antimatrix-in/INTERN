@@ -1,0 +1,37 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-success">Project Allocation</span>
+</div>
+<h2 class="headline">Project Allocation Confirmed</h2>
+<p>Hello <strong>{{ recipient_name|default('Intern') }}</strong>,</p>
+<p>Congratulations! You have been allocated to an engineering project on the Anti-Matrix platform:</p>
+
+<div class="detail-card">
+  <table width="100%" cellpadding="4" cellspacing="0">
+    <tr>
+      <td width="35%" style="color:#64748B; font-weight:600; font-size:13px;">Project Name:</td>
+      <td style="color:#0F172A; font-weight:700; font-size:13px;">{{ project_title }}</td>
+    </tr>
+    {% if tech_stack %}
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Tech Stack:</td>
+      <td style="color:#0F172A; font-size:13px;">{{ tech_stack }}</td>
+    </tr>
+    {% endif %}
+    {% if mentor_name %}
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Assigned Mentor:</td>
+      <td style="color:#0F172A; font-weight:600; font-size:13px;">{{ mentor_name }}</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+<p>You can now access your project roadmap, weekly objectives, and codebase requirements directly in your dashboard:</p>
+
+<center>
+  <a href="{{ action_url|default('#') }}" class="cta-button">Explore Project Workspace &rarr;</a>
+</center>
+{% endblock %}

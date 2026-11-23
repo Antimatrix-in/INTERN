@@ -1,17 +1,26 @@
+import io
 import os
 import re
 import time
-from datetime import datetime
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, current_app, send_file, session, g
+from datetime import datetime, date
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, current_app, send_file, session, g, Response
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
 from app.extensions import db
 from app.models import (
     User, Student, College, Department, Application, Internship, InternshipPlan, ProjectAssignment, WeeklyMilestone,
-    WeeklyTask, WeeklySubmission, Meeting, Notification
+    WeeklyTask, WeeklySubmission, Meeting, Notification, EvaluationRubric,
+    NotificationPreference, Announcement, AnnouncementRead,
+    Document, IssuedDocument, CertificateVerification,
+    AttendanceRecord, LeaveRequest, AttendancePolicy, CompanyHoliday
 )
 from app.services.mentor_service import get_approved_mentors, APPROVED_MENTOR_EMAILS
+from app.services.submission_workflow_service import SubmissionWorkflowService
+from app.services.analytics_reporting_service import AnalyticsReportingService
+from app.services.notification_service import NotificationService
+from app.services.document_service import DocumentService
+from app.services.attendance_service import AttendanceService
 
 student_bp = Blueprint('student', __name__)
 
@@ -314,6 +323,7 @@ def week_detail(milestone_id):
     submissions = milestone.submissions.order_by(WeeklySubmission.id.desc()).all()
     latest_submission = milestone.latest_submission
     meeting = Meeting.query.filter_by(milestone_id=milestone.id).first()
+    active_rubric = EvaluationRubric.get_active()
 
     return render_template(
         'student/week_detail.html',
@@ -325,7 +335,30 @@ def week_detail(milestone_id):
         tasks=tasks,
         submissions=submissions,
         latest_submission=latest_submission,
-        meeting=meeting
+        meeting=meeting,
+        rubric=active_rubric
+    )
+
+
+@student_bp.route('/week/<int:milestone_id>/task/<int:task_id>')
+@login_required
+def task_detail(milestone_id, task_id):
+    student = get_current_student()
+    milestone = WeeklyMilestone.query.get_or_404(milestone_id)
+
+    # Strict IDOR check
+    if milestone.assignment.internship.student_id != student.id:
+        abort(403)
+
+    task = WeeklyTask.query.filter_by(id=task_id, milestone_id=milestone.id).first_or_404()
+    return render_template(
+        'student/task_detail.html',
+        student=student,
+        internship=milestone.assignment.internship,
+        assignment=milestone.assignment,
+        project=milestone.assignment.project,
+        milestone=milestone,
+        task=task
     )
 
 
@@ -334,12 +367,22 @@ def week_detail(milestone_id):
 def toggle_task(milestone_id, task_id):
     student = get_current_student()
     milestone = WeeklyMilestone.query.get_or_404(milestone_id)
+    if hasattr(milestone, '_preloaded_completed_tasks_count'):
+        delattr(milestone, '_preloaded_completed_tasks_count')
+    if hasattr(milestone, '_preloaded_total_tasks_count'):
+        delattr(milestone, '_preloaded_total_tasks_count')
 
     if milestone.assignment.internship.student_id != student.id:
         abort(403)
 
     task = WeeklyTask.query.filter_by(id=task_id, milestone_id=milestone.id).first_or_404()
     task.is_completed = not task.is_completed
+    task.status = 'COMPLETED' if task.is_completed else 'IN_PROGRESS'
+
+    # If milestone is AVAILABLE, transition to IN_PROGRESS upon work start
+    if milestone.status in ['AVAILABLE', 'ASSIGNED'] and task.is_completed:
+        milestone.status = 'IN_PROGRESS'
+
     db.session.commit()
 
     if request.is_json or request.headers.get('Accept') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -361,6 +404,10 @@ def toggle_task(milestone_id, task_id):
 def submit_milestone(milestone_id):
     student = get_current_student()
     milestone = WeeklyMilestone.query.get_or_404(milestone_id)
+    if hasattr(milestone, '_preloaded_completed_tasks_count'):
+        delattr(milestone, '_preloaded_completed_tasks_count')
+    if hasattr(milestone, '_preloaded_total_tasks_count'):
+        delattr(milestone, '_preloaded_total_tasks_count')
 
     # Strict IDOR check
     if milestone.assignment.internship.student_id != student.id:
@@ -374,6 +421,12 @@ def submit_milestone(milestone_id):
     # Duplicate submission protection
     if milestone.status in ['UNDER_REVIEW', 'SUBMITTED']:
         flash('A submission is already currently under review for this week. Please await evaluation.', 'warning')
+        return redirect(url_for('student.week_detail', milestone_id=milestone.id))
+
+    # Validate state transition using workflow engine
+    valid_trans, trans_err = SubmissionWorkflowService.validate_milestone_transition(milestone.status, 'UNDER_REVIEW')
+    if not valid_trans:
+        flash(trans_err or 'Invalid submission status transition.', 'danger')
         return redirect(url_for('student.week_detail', milestone_id=milestone.id))
 
     # 1. Require all tasks to be completed
@@ -398,6 +451,7 @@ def submit_milestone(milestone_id):
         return redirect(url_for('student.week_detail', milestone_id=milestone.id))
 
     submission_notes = request.form.get('submission_notes', '').strip()
+    implementation_summary = request.form.get('implementation_summary', '').strip()
 
     try:
         # Create submission record (preserving full history and reusing existing database fields)
@@ -410,10 +464,12 @@ def submit_milestone(milestone_id):
             demo_video_path=demo_video_url,
             file_path=demo_video_url,
             submission_notes=submission_notes,
+            implementation_summary=implementation_summary,
             status='UNDER_REVIEW',
             submitted_at=datetime.utcnow()
         )
         db.session.add(sub)
+        db.session.flush()
 
         # Update milestone status
         milestone.status = 'UNDER_REVIEW'
@@ -428,6 +484,17 @@ def submit_milestone(milestone_id):
             link=url_for('student.week_detail', milestone_id=milestone.id)
         )
         db.session.add(notif)
+
+        # Notification for assigned mentor if one exists
+        mentor_id = milestone.assignment.internship.mentor_id
+        if mentor_id:
+            SubmissionWorkflowService.notify_submission_received(
+                mentor_user_id=mentor_id,
+                student_name=student.user.full_name,
+                milestone=milestone,
+                submission_id=sub.id
+            )
+
         db.session.commit()
 
         flash(f'Week {milestone.week_number} submitted for verification successfully! Your submission is now UNDER REVIEW.', 'success')
@@ -512,17 +579,105 @@ def meetings():
 @login_required
 def notifications():
     student = get_current_student()
-    all_notifs = current_user.notifications.all()
-    return render_template('student/notifications.html', student=student, notifications=all_notifs)
+    category = request.args.get('category', 'ALL')
+    unread_only = request.args.get('unread', '0') in ['1', 'true', 'yes']
+
+    notifications_list = NotificationService.get_user_notifications(
+        user_id=current_user.id,
+        category=category,
+        unread_only=unread_only,
+        limit=100
+    )
+    announcements = NotificationService.get_user_announcements(current_user.id, limit=5)
+    preferences = NotificationService.get_or_create_preferences(current_user.id)
+
+    return render_template(
+        'student/notifications.html',
+        student=student,
+        notifications=notifications_list,
+        announcements=announcements,
+        preferences=preferences,
+        active_category=category.upper(),
+        unread_only=unread_only,
+        unread_count=current_user.unread_notifications_count
+    )
+
+
+@student_bp.route('/notifications/<int:notification_id>/read', methods=['POST'])
+@login_required
+def mark_single_notification_read(notification_id):
+    success = NotificationService.mark_as_read(notification_id, current_user.id)
+    if not success:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': 'Unauthorized or notification not found.'}), 403
+        abort(403)
+
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True, 'unread_count': current_user.unread_notifications_count})
+
+    return redirect(request.referrer or url_for('student.notifications'))
 
 
 @student_bp.route('/notifications/mark-all-read', methods=['POST'])
+@student_bp.route('/notifications/read-all', methods=['POST'])
 @login_required
 def mark_all_read():
-    current_user.notifications.filter_by(is_read=False).update({'is_read': True})
-    db.session.commit()
+    category = request.form.get('category') or request.args.get('category')
+    NotificationService.mark_all_as_read(current_user.id, category=category)
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True, 'unread_count': 0})
     flash('All notifications marked as read.', 'info')
     return redirect(url_for('student.notifications'))
+
+
+@student_bp.route('/notifications/preferences', methods=['GET', 'POST'])
+@login_required
+def notification_preferences():
+    student = get_current_student()
+    prefs = NotificationService.get_or_create_preferences(current_user.id)
+
+    if request.method == 'POST':
+        email_enabled = request.form.get('email_enabled') == 'on'
+        in_portal_enabled = request.form.get('in_portal_enabled') == 'on'
+        deadline_reminders = request.form.get('deadline_reminders') == 'on'
+        announcements = request.form.get('announcements') == 'on'
+        evaluations = request.form.get('evaluations') == 'on'
+
+        NotificationService.update_preferences(
+            user_id=current_user.id,
+            email_enabled=email_enabled,
+            in_portal_enabled=in_portal_enabled,
+            deadline_reminders=deadline_reminders,
+            announcements=announcements,
+            evaluations=evaluations
+        )
+        flash('Notification preferences saved successfully.', 'success')
+        return redirect(url_for('student.notification_preferences'))
+
+    return render_template(
+        'student/notification_preferences.html',
+        student=student,
+        preferences=prefs
+    )
+
+
+@student_bp.route('/notifications/api/unread-count')
+@login_required
+def api_unread_notifications_count():
+    return jsonify({
+        'success': True,
+        'unread_count': current_user.unread_notifications_count
+    })
+
+
+@student_bp.route('/notifications/announcements/<int:announcement_id>/acknowledge', methods=['POST'])
+@login_required
+def acknowledge_announcement(announcement_id):
+    NotificationService.mark_announcement_read(announcement_id, current_user.id)
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True})
+    flash('Announcement acknowledged.', 'info')
+    return redirect(request.referrer or url_for('student.notifications'))
 
 
 @student_bp.route('/documents')
@@ -530,7 +685,136 @@ def mark_all_read():
 def documents():
     student = get_current_student()
     internship = student.active_internship
-    return render_template('student/documents.html', student=student, internship=internship)
+    
+    issued_documents = IssuedDocument.query.filter_by(student_id=student.id).order_by(IssuedDocument.id.desc()).all()
+    uploaded_documents = Document.query.filter_by(student_id=student.id).order_by(Document.id.desc()).all()
+    
+    eligibility = DocumentService.validate_certificate_eligibility(internship) if internship else {
+        'is_eligible': False,
+        'reason': 'No active internship found.',
+        'total_milestones': 0,
+        'approved_milestones': 0,
+        'completion_percentage': 0.0,
+        'internship_status': 'NONE'
+    }
+
+    # Certificate verification record if already issued
+    certificate_ver = CertificateVerification.query.filter_by(internship_id=internship.id).first() if internship else None
+
+    return render_template(
+        'student/documents.html',
+        student=student,
+        internship=internship,
+        issued_documents=issued_documents,
+        uploaded_documents=uploaded_documents,
+        eligibility=eligibility,
+        certificate_ver=certificate_ver
+    )
+
+
+@student_bp.route('/documents/upload', methods=['POST'])
+@login_required
+def upload_document():
+    student = get_current_student()
+    doc_type = request.form.get('doc_type', 'RESUME').strip().upper()
+    file_obj = request.files.get('file') or request.files.get('document')
+
+    if not file_obj or not file_obj.filename:
+        flash('Please select a valid document file to upload.', 'danger')
+        return redirect(url_for('student.documents'))
+
+    try:
+        doc = DocumentService.upload_student_document(
+            student_id=student.id,
+            doc_type=doc_type,
+            file_obj=file_obj,
+            uploaded_by_user_id=current_user.id
+        )
+        flash(f'{doc.doc_type} uploaded successfully. Awaiting administrative verification.', 'success')
+    except Exception as e:
+        flash(f'Upload failed: {str(e)}', 'danger')
+
+    return redirect(url_for('student.documents'))
+
+
+@student_bp.route('/documents/download/<doc_no>')
+@student_bp.route('/documents/<int:doc_id>/download')
+@login_required
+def download_document(doc_no=None, doc_id=None):
+    identifier = doc_no if doc_no else doc_id
+    try:
+        file_path, download_name, mime = DocumentService.get_document_for_download(
+            doc_identifier=identifier,
+            current_user_obj=current_user,
+            is_issued=True
+        )
+        return send_file(file_path, mimetype=mime, as_attachment=True, download_name=download_name)
+    except PermissionError as pe:
+        abort(403)
+    except FileNotFoundError:
+        abort(404)
+    except Exception as e:
+        flash(f'Download error: {str(e)}', 'danger')
+        return redirect(url_for('student.documents'))
+
+
+@student_bp.route('/documents/preview/<doc_no>')
+@student_bp.route('/documents/<int:doc_id>/preview')
+@login_required
+def preview_document(doc_no=None, doc_id=None):
+    identifier = doc_no if doc_no else doc_id
+    try:
+        file_path, download_name, mime = DocumentService.get_document_for_download(
+            doc_identifier=identifier,
+            current_user_obj=current_user,
+            is_issued=True
+        )
+        return send_file(file_path, mimetype=mime, as_attachment=False)
+    except PermissionError:
+        abort(403)
+    except FileNotFoundError:
+        abort(404)
+    except Exception as e:
+        flash(f'Preview error: {str(e)}', 'danger')
+        return redirect(url_for('student.documents'))
+
+
+@student_bp.route('/documents/uploaded/<int:doc_id>/download')
+@login_required
+def download_uploaded_document(doc_id):
+    try:
+        file_path, download_name, mime = DocumentService.get_document_for_download(
+            doc_identifier=doc_id,
+            current_user_obj=current_user,
+            is_issued=False
+        )
+        return send_file(file_path, mimetype=mime, as_attachment=True, download_name=download_name)
+    except PermissionError:
+        abort(403)
+    except FileNotFoundError:
+        abort(404)
+    except Exception as e:
+        flash(f'Download error: {str(e)}', 'danger')
+        return redirect(url_for('student.documents'))
+
+
+@student_bp.route('/documents/uploaded/<int:doc_id>/preview')
+@login_required
+def preview_uploaded_document(doc_id):
+    try:
+        file_path, download_name, mime = DocumentService.get_document_for_download(
+            doc_identifier=doc_id,
+            current_user_obj=current_user,
+            is_issued=False
+        )
+        return send_file(file_path, mimetype=mime, as_attachment=False)
+    except PermissionError:
+        abort(403)
+    except FileNotFoundError:
+        abort(404)
+    except Exception as e:
+        flash(f'Preview error: {str(e)}', 'danger')
+        return redirect(url_for('student.documents'))
 
 
 ALLOWED_PROFILE_YEARS = {'1st Year', '2nd Year', '3rd Year', '4th Year', 'Final Year', '4th Year / Final Year'}
@@ -683,4 +967,279 @@ def skip_profile_onboarding():
     if request.is_json:
         return jsonify({'success': True})
     return redirect(url_for('student.dashboard'))
+
+
+# ─── 9. Intern Performance Analytics & Self-Telemetry (Phase 2 Module 6) ─────
+
+@student_bp.route('/analytics')
+@login_required
+def analytics():
+    """
+    Candidate self-service performance scorecard and historical progress metrics.
+    Strictly isolated to current authenticated student (IDOR protected).
+    """
+    student = get_current_student()
+    if not student:
+        flash('Candidate profile not found.', 'danger')
+        return redirect(url_for('student.dashboard'))
+
+    scorecard = AnalyticsReportingService.get_intern_detail_analytics(student.id)
+    if not scorecard:
+        flash('Analytics telemetry currently unavailable.', 'info')
+        return redirect(url_for('student.dashboard'))
+
+    internship = student.active_internship or student.internships.first()
+    assignment = internship.assignments.first() if internship else None
+
+    return render_template(
+        'student/analytics.html',
+        assignment=assignment,
+        **scorecard
+    )
+
+
+# ─── 10. Attendance, Leave & Scheduling (Phase 2 Module 9) ───────────────────
+
+@student_bp.route('/attendance', endpoint='attendance')
+@student_bp.route('/attendance/dashboard', endpoint='attendance_dashboard')
+@login_required
+def attendance():
+    """
+    Candidate self-service attendance dashboard:
+    - Real-time check-in and check-out widget
+    - Daily status badge & today's log
+    - Monthly interactive attendance matrix/calendar
+    - Granular KPI metrics (attendance rate, present, late, half-day, leave days)
+    - Schedule trajectory & completion pace
+    """
+    student = get_current_student()
+    internship = student.active_internship or student.internships.first()
+    today_dt = datetime.now()
+    today_date = today_dt.date()
+
+    # Get today's attendance record
+    today_record = AttendanceService.get_today_attendance(student.id, today_date)
+
+    # Calendar query month/year
+    try:
+        year = int(request.args.get('year', today_date.year))
+        month = int(request.args.get('month', today_date.month))
+    except (ValueError, TypeError):
+        year = today_date.year
+        month = today_date.month
+
+    # Clamp month/year
+    if month < 1 or month > 12:
+        month = today_date.month
+    if year < 2020 or year > 2035:
+        year = today_date.year
+
+    monthly_matrix = AttendanceService.get_monthly_matrix(student.id, year, month)
+    summary = AttendanceService.get_student_attendance_summary(student.id, month=month, year=year)
+    overall_summary = AttendanceService.get_student_attendance_summary(student.id)
+    policy = AttendanceService.get_active_policy()
+
+    schedule_summary = None
+    if internship:
+        try:
+            schedule_summary = AttendanceService.get_internship_schedule_summary(internship.id)
+        except Exception as e:
+            current_app.logger.warning(f"Error computing internship schedule summary: {e}")
+
+    # Month navigation helpers
+    prev_month = 12 if month == 1 else month - 1
+    prev_year = year - 1 if month == 1 else year
+    next_month = 1 if month == 12 else month + 1
+    next_year = year + 1 if month == 12 else year
+    month_name = date(year, month, 1).strftime('%B %Y')
+
+    return render_template(
+        'student/attendance.html',
+        student=student,
+        internship=internship,
+        today_date=today_date,
+        today_record=today_record,
+        monthly_matrix=monthly_matrix,
+        summary=summary,
+        overall_summary=overall_summary,
+        policy=policy,
+        schedule_summary=schedule_summary,
+        selected_year=year,
+        selected_month=month,
+        month_name=month_name,
+        prev_month=prev_month,
+        prev_year=prev_year,
+        next_month=next_month,
+        next_year=next_year
+    )
+
+
+@student_bp.route('/attendance/check-in', methods=['POST'])
+@login_required
+def attendance_check_in():
+    """Records real-time intern arrival timestamp and validates late status."""
+    student = get_current_student()
+    internship = student.active_internship or student.internships.first()
+    internship_id = internship.id if internship else None
+    notes = request.form.get('notes', '').strip()
+    ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+
+    try:
+        record = AttendanceService.record_check_in(
+            student_id=student.id,
+            internship_id=internship_id,
+            ip_address=ip_addr,
+            notes=notes if notes else None
+        )
+        flash(f"Check-in registered successfully at {record.check_in_time.strftime('%H:%M UTC')}. Status: {record.display_status}.", 'success')
+    except ValueError as ve:
+        flash(str(ve), 'warning')
+    except Exception as e:
+        flash(f"Failed to record check-in: {str(e)}", 'danger')
+
+    return redirect(url_for('student.attendance_dashboard'))
+
+
+@student_bp.route('/attendance/check-out', methods=['POST'])
+@login_required
+def attendance_check_out():
+    """Records intern departure timestamp, evaluates working hours and determines half-day status."""
+    student = get_current_student()
+    notes = request.form.get('notes', '').strip()
+    ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+
+    try:
+        record = AttendanceService.record_check_out(
+            student_id=student.id,
+            ip_address=ip_addr,
+            notes=notes if notes else None
+        )
+        flash(f"Check-out registered successfully at {record.check_out_time.strftime('%H:%M UTC')}. Total duration: {record.work_duration_formatted} ({record.display_status}).", 'success')
+    except ValueError as ve:
+        flash(str(ve), 'warning')
+    except Exception as e:
+        flash(f"Failed to record check-out: {str(e)}", 'danger')
+
+    return redirect(url_for('student.attendance_dashboard'))
+
+
+@student_bp.route('/leave', endpoint='leave')
+@student_bp.route('/leave/dashboard', endpoint='leave_dashboard')
+@login_required
+def leave():
+    """Leave management portal for candidate: history, status tracking, and leave application."""
+    student = get_current_student()
+    internship = student.active_internship or student.internships.first()
+    
+    leave_requests = LeaveRequest.query.filter_by(student_id=student.id).order_by(LeaveRequest.created_at.desc()).all()
+    pending_count = sum(1 for l in leave_requests if l.status == 'PENDING')
+    approved_count = sum(1 for l in leave_requests if l.status == 'APPROVED')
+    rejected_count = sum(1 for l in leave_requests if l.status == 'REJECTED')
+    total_approved_days = sum(l.days_count for l in leave_requests if l.status == 'APPROVED')
+
+    return render_template(
+        'student/leave.html',
+        student=student,
+        internship=internship,
+        leave_requests=leave_requests,
+        pending_count=pending_count,
+        approved_count=approved_count,
+        rejected_count=rejected_count,
+        total_approved_days=total_approved_days,
+        today_date=datetime.now().date()
+    )
+
+
+@student_bp.route('/leave/apply', methods=['POST'])
+@login_required
+def apply_leave():
+    """Submits a leave request with overlap validation and optional documentation."""
+    student = get_current_student()
+    internship = student.active_internship or student.internships.first()
+    if not internship:
+        flash("You do not have an active internship assignment to request leave against.", "danger")
+        return redirect(url_for('student.leave_dashboard'))
+
+    leave_type = request.form.get('leave_type', '').strip()
+    start_date_str = request.form.get('start_date', '').strip()
+    end_date_str = request.form.get('end_date', '').strip()
+    reason = request.form.get('reason', '').strip()
+    file_obj = request.files.get('document')
+
+    if not leave_type or not start_date_str or not end_date_str or not reason:
+        flash("All fields (Leave Type, Start Date, End Date, Reason) are required.", "danger")
+        return redirect(url_for('student.leave_dashboard'))
+
+    try:
+        start_d = AttendanceService.parse_date(start_date_str)
+        end_d = AttendanceService.parse_date(end_date_str)
+
+        leave_req = AttendanceService.apply_leave(
+            student_id=student.id,
+            internship_id=internship.id,
+            leave_type=leave_type,
+            start_date=start_d,
+            end_date=end_d,
+            reason=reason,
+            file_obj=file_obj
+        )
+        flash(f"Leave application for {leave_req.days_count} working day(s) ({leave_req.display_type}) submitted successfully. Awaiting review.", "success")
+    except ValueError as ve:
+        flash(str(ve), "danger")
+    except Exception as e:
+        flash(f"Error submitting leave request: {str(e)}", "danger")
+
+    return redirect(url_for('student.leave_dashboard'))
+
+
+@student_bp.route('/leave/<int:leave_id>/cancel', methods=['POST'])
+@login_required
+def cancel_leave(leave_id):
+    """Allows an intern to cancel their own pending leave application."""
+    student = get_current_student()
+    reason = request.form.get('reason', 'Cancelled by student.').strip()
+
+    try:
+        AttendanceService.cancel_leave(leave_id=leave_id, student_id=student.id, reason=reason)
+        flash("Leave request has been successfully cancelled.", "success")
+    except (ValueError, PermissionError) as e:
+        flash(str(e), "danger")
+    except Exception as e:
+        flash(f"Failed to cancel leave: {str(e)}", "danger")
+
+    return redirect(url_for('student.leave_dashboard'))
+
+
+@student_bp.route('/attendance/export')
+@login_required
+def export_attendance():
+    """Generates official attendance reports in CSV or PDF format for the authenticated student."""
+    student = get_current_student()
+    export_format = request.args.get('format', 'csv').lower()
+
+    if export_format == 'pdf':
+        try:
+            pdf_bytes, filename, mime = AttendanceService.generate_attendance_pdf(student_id=student.id)
+            return send_file(
+                io.BytesIO(pdf_bytes),
+                mimetype=mime,
+                as_attachment=True,
+                download_name=filename
+            )
+        except Exception as e:
+            flash(f"PDF generation failed: {str(e)}", "danger")
+            return redirect(url_for('student.attendance_dashboard'))
+    else:
+        try:
+            csv_content, filename, mime = AttendanceService.generate_attendance_csv(student_id=student.id)
+            return Response(
+                csv_content,
+                mimetype=mime,
+                headers={"Content-Disposition": f"attachment; filename={filename}"}
+            )
+        except Exception as e:
+            flash(f"CSV export failed: {str(e)}", "danger")
+            return redirect(url_for('student.attendance_dashboard'))
+
+
 

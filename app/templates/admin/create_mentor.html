@@ -1,0 +1,153 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Register Technical Mentor | Anti-Matrix Enterprise{% endblock %}
+
+{% block content %}
+<div class="space-y-6" style="max-width: 900px; margin: 0 auto;">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between pb-3 border-bottom" style="border-color: var(--border-light) !important;">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <a href="{{ url_for('admin.mentors_list') }}" class="text-xs text-muted text-decoration-none hover-emerald d-inline-flex align-items-center gap-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Back to Mentor Directory
+        </a>
+      </div>
+      <h1 class="h3 font-weight-bold text-dark mb-1" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">Register Technical Mentor</h1>
+      <p class="text-sm text-muted mb-0">Provision authorized mentor accounts with automated sequential IDs, department allocation, and mentee capacity controls.</p>
+    </div>
+
+    <!-- Pre-allocated ID Badge -->
+    <div class="text-end">
+      <div class="text-xs font-weight-bold text-muted text-uppercase" style="letter-spacing: 0.05em;">ALLOCATED MENTOR ID</div>
+      <span class="badge font-mono py-1.5 px-2.5 text-xs font-weight-bold" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald); border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8125rem;">
+        {{ next_mentor_id }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Registration Card -->
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden" style="border: 1px solid var(--border-light) !important;">
+    <div class="card-header bg-light py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--border-light) !important;">
+      <div class="d-flex align-items-center gap-2">
+        <div class="rounded-2 p-1.5 d-flex align-items-center justify-center text-white" style="background: var(--brand-emerald);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+        </div>
+        <div>
+          <div class="font-weight-bold text-dark" style="font-size: 0.9375rem;">Mentor Onboarding Profile</div>
+          <div class="text-xs text-muted">Complete professional details and technical supervision capacity</div>
+        </div>
+      </div>
+      <span class="badge bg-white border text-muted text-xs">Role: mentor</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.create_mentor') }}" class="p-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Section 1: Identity & Credentials -->
+      <div class="mb-4">
+        <h6 class="text-xs font-weight-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.05em;">
+          1. Identity & Portal Credentials
+        </h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Full Legal Name <span class="text-danger">*</span></label>
+            <input type="text" name="full_name" class="form-control form-control-sm" placeholder="e.g. Dr. Rajesh Kumar" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Official Corporate Email <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control form-control-sm" placeholder="e.g. rajesh.kumar@antimatrix.co.in" required>
+            <div class="text-xs text-muted mt-1">Must be unique across the platform. Used for mentor login.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Mentor Employee ID</label>
+            <input type="text" name="employee_id" class="form-control form-control-sm font-mono" value="{{ next_mentor_id }}">
+            <div class="text-xs text-muted mt-1">Leave as auto-generated or specify custom identifier.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Contact Phone / WhatsApp</label>
+            <input type="tel" name="phone" class="form-control form-control-sm" placeholder="+91 98765 43210">
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4" style="border-color: #f1f5f9;">
+
+      <!-- Section 2: Department & Expertise -->
+      <div class="mb-4">
+        <h6 class="text-xs font-weight-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.05em;">
+          2. Department, Role & Technical Skills
+        </h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Department / Domain <span class="text-danger">*</span></label>
+            <select name="department" class="form-select form-select-sm" required>
+              <option value="Computer Science & Engineering" selected>Computer Science & Engineering</option>
+              <option value="Cloud Architecture & DevOps">Cloud Architecture & DevOps</option>
+              <option value="Artificial Intelligence & ML">Artificial Intelligence & ML</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Cyber Security">Cyber Security</option>
+              <option value="Full-Stack Web Engineering">Full-Stack Web Engineering</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Designation / Title</label>
+            <input type="text" name="designation" class="form-control form-control-sm" placeholder="e.g. Lead Cloud Architect" value="Technical Mentor">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label text-xs font-weight-bold text-dark">Technical Skills & Expertise (Comma-separated)</label>
+            <input type="text" name="skills" class="form-control form-control-sm" placeholder="e.g. Python, Docker, Kubernetes, Terraform, AWS, REST APIs" value="Python, Flask, Docker, AWS">
+            <div class="text-xs text-muted mt-1">Used by administrators to match mentors with appropriate project curricula.</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4" style="border-color: #f1f5f9;">
+
+      <!-- Section 3: Capacity & Availability -->
+      <div class="mb-4">
+        <h6 class="text-xs font-weight-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.05em;">
+          3. Supervisory Capacity & Initial Availability
+        </h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Maximum Intern Capacity <span class="text-danger">*</span></label>
+            <input type="number" name="max_capacity" class="form-control form-control-sm" min="1" max="50" value="5" required>
+            <div class="text-xs text-muted mt-1">Maximum number of active mentees permitted concurrently.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Initial Availability Status</label>
+            <select name="availability_status" class="form-select form-select-sm">
+              <option value="AVAILABLE" selected>AVAILABLE (Accepting Mentees)</option>
+              <option value="BUSY">BUSY (Near Capacity)</option>
+              <option value="ON_LEAVE">ON LEAVE (No New Allocations)</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-xs font-weight-bold text-dark">Initial Portal Password</label>
+            <input type="text" name="password" class="form-control form-control-sm font-mono" value="Mentor@2026Password!">
+            <div class="text-xs text-muted mt-1">Default secure password. Mentor can change upon sign in.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex align-items-center justify-content-end gap-2 pt-3 border-top" style="border-color: var(--border-light) !important;">
+        <a href="{{ url_for('admin.mentors_list') }}" class="btn btn-sm btn-light border px-3">Cancel</a>
+        <button type="submit" class="btn btn-sm btn-primary px-4 font-weight-bold shadow-sm" style="background: var(--brand-emerald); border-color: var(--brand-emerald);">
+          Provision Mentor Account
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

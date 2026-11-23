@@ -1,0 +1,448 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Allocation Wizard — {{ student.user.full_name }} — ANTI MATRIX{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem 2.5rem; max-width: 1250px; margin: 0 auto;">
+
+  <!-- Header Breadcrumb & Back -->
+  <div style="margin-bottom: 1.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+      <a href="{{ url_for('admin.allocations_hub') }}" style="color: var(--text-muted); text-decoration: none;">Allocations Hub</a>
+      <span>/</span>
+      <span style="color: var(--text-primary); font-weight: 700;">Intelligent Allocation Wizard</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.25rem;">
+          Intelligent Project & Mentor Allocation
+        </h1>
+        <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">
+          Multi-dimensional skill matching and workload-balanced mentor assignment for {{ student.user.full_name }}
+        </p>
+      </div>
+      <a href="{{ url_for('admin.allocations_hub') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+        &larr; Return to Allocations Hub
+      </a>
+    </div>
+  </div>
+
+  <!-- Intern Profile & Skill Telemetry Card -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1.25rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 54px; height: 54px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.4rem; color: #10B981;">
+          {{ student.user.full_name[:1] if student.user else 'I' }}
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+              {{ student.user.full_name }}
+            </h2>
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; color: #60A5FA; background: rgba(59,130,246,0.12); padding: 0.15rem 0.55rem; border-radius: 6px;">
+              {{ student.student_uid }}
+            </span>
+            <span style="font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 6px; {% if internship.plan.duration_months == 3 %}background: rgba(139,92,246,0.15); color: #A78BFA;{% else %}background: rgba(59,130,246,0.15); color: #60A5FA;{% endif %}">
+              {{ internship.plan.duration_months }} Month Track ({{ internship.plan.title }})
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap;">
+            <span><strong>College:</strong> {{ student.college.name if student.college else 'General' }}</span>
+            <span>•</span>
+            <span><strong>Department:</strong> {{ student.department.name if student.department else (student.user.department if student.user else 'General') }}</span>
+            <span>•</span>
+            <span><strong>Current Status:</strong> <span style="color: #10B981; font-weight: 700;">{{ internship.status }}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Existing Assignment Badge if Reallocating -->
+      {% if existing_assignment %}
+      <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 0.75rem 1rem; text-align: right;">
+        <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #F59E0B; display: block;">Currently Assigned To:</span>
+        <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary);">{{ existing_assignment.project.project_code }}: {{ existing_assignment.project.title }}</span>
+        <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 0.2rem;">Reallocation will archive this assignment.</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Live Intern Skills & Skill Adder -->
+    <div style="margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem;">
+        <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">
+          Intern Technical Skills (Used for Real-Time Matching):
+        </span>
+        <span style="font-size: 0.72rem; color: var(--text-muted);">
+          Edit or append comma-separated skills below to recalculate match scores
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;" id="skills-container">
+        {% for s in student.skills_list %}
+        <span class="skill-tag" style="font-size: 0.75rem; font-family: var(--font-mono); font-weight: 600; background: rgba(16,185,129,0.12); color: #34D399; border: 1px solid rgba(16,185,129,0.25); padding: 0.2rem 0.6rem; border-radius: 6px;">
+          {{ s }}
+        </span>
+        {% else %}
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">No skills specified yet.</span>
+        {% endfor %}
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+        <input type="text" id="new-skills-input" value="{{ student.skills }}" placeholder="e.g. Python, Flask, React, PostgreSQL, Docker, Machine Learning" style="flex: 1; padding: 0.5rem 0.85rem; font-size: 0.82rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-family: var(--font-mono);">
+        <button type="button" onclick="updateSkills()" class="btn btn-secondary btn-sm" style="font-weight: 700; font-size: 0.75rem; white-space: nowrap;">
+          Update Skills & Recalculate
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Allocation Form (Submits to /allocations/wizard) -->
+  <form id="allocationForm" method="POST" action="{{ url_for('admin.allocation_wizard') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="student_id" value="{{ student.id }}">
+    <input type="hidden" name="project_id" id="selected-project-id" value="{{ selected_project.id if selected_project else '' }}">
+    <input type="hidden" name="mentor_id" id="selected-mentor-id" value="{{ recommended_mentors[0]['mentor'].id if recommended_mentors else '' }}">
+
+    <!-- 2 Column Layout: Left Project Matching, Right Mentor Matching & Review -->
+    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.75rem; align-items: start;">
+
+      <!-- ── Left Column: Intelligent Project Recommendations ─────────────────── -->
+      <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+          <div>
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+              1. Recommended Projects
+            </h3>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.15rem 0 0;">
+              Ranked automatically by transparent skill overlap & domain alignment
+            </p>
+          </div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #10B981; background: rgba(16,185,129,0.12); padding: 0.2rem 0.55rem; border-radius: 6px;">
+            {{ recommended_projects|length }} compatible
+          </span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;" id="projects-list-container">
+          {% for pdata in recommended_projects %}
+          {% set p = pdata.project %}
+          {% set is_selected = (selected_project and selected_project.id == p.id) %}
+          <div class="project-card" onclick="selectProject({{ p.id }})" id="project-card-{{ p.id }}"
+               style="background: var(--bg-card); border: 2px solid {% if is_selected %}#10B981{% else %}var(--border-subtle){% endif %}; border-radius: 14px; padding: 1.25rem; cursor: pointer; transition: all 0.2s; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
+               onmouseover="if (!this.classList.contains('selected')) this.style.borderColor='rgba(16,185,129,0.5)'"
+               onmouseout="if (!this.classList.contains('selected')) this.style.borderColor='var(--border-subtle)'">
+            
+            <!-- Selection Checkmark -->
+            <div style="position: absolute; right: 1rem; top: 1rem; width: 22px; height: 22px; border-radius: 50%; border: 2px solid {% if is_selected %}#10B981{% else %}rgba(255,255,255,0.2){% endif %}; background: {% if is_selected %}#10B981{% else %}transparent{% endif %}; display: flex; align-items: center; justify-content: center;">
+              {% if is_selected %}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              {% endif %}
+            </div>
+
+            <!-- Project Title & Header -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; padding-right: 2rem;">
+              <span style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: #60A5FA; background: rgba(59,130,246,0.12); padding: 0.15rem 0.5rem; border-radius: 6px;">
+                {{ p.project_code }}
+              </span>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">{{ p.duration_months }}M Track</span>
+              <span style="color: rgba(255,255,255,0.2);">•</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">{{ p.domain }}</span>
+            </div>
+
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.5rem;">
+              {{ p.title }}
+            </h4>
+
+            <!-- Match Score Breakdown & Tier -->
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+              <span style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 900; padding: 0.2rem 0.6rem; border-radius: 6px;
+                {% if pdata.match_score >= 80 %}background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.3);
+                {% elif pdata.match_score >= 60 %}background: rgba(59,130,246,0.15); color: #60A5FA; border: 1px solid rgba(59,130,246,0.3);
+                {% elif pdata.match_score >= 40 %}background: rgba(245,158,11,0.15); color: #FBBF24; border: 1px solid rgba(245,158,11,0.3);
+                {% else %}background: rgba(239,68,68,0.15); color: #F87171; border: 1px solid rgba(239,68,68,0.3);{% endif %}">
+                {{ pdata.match_score }}% Match ({{ pdata.match_tier }})
+              </span>
+
+              <!-- Project Capacity Badge -->
+              <span style="font-size: 0.72rem; font-weight: 700; color: {% if pdata.is_at_capacity %}#EF4444{% else %}var(--text-muted){% endif %};">
+                Capacity: {{ pdata.active_interns_count }} / {{ pdata.max_capacity }}
+                {% if pdata.is_at_capacity %}(AT CAPACITY){% else %}({{ pdata.remaining_capacity }} spots){% endif %}
+              </span>
+            </div>
+
+            <!-- Matching Skills (Green) & Missing Skills (Red/Gray) -->
+            <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+              {% if pdata.matching_skills %}
+              <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.3rem;">
+                <span style="color: #34D399; font-weight: 700;">Matching:</span>
+                {% for s in pdata.matching_skills %}
+                <span style="font-size: 0.68rem; font-family: var(--font-mono); background: rgba(16,185,129,0.12); color: #34D399; padding: 0.1rem 0.4rem; border-radius: 4px;">
+                  ✓ {{ s }}
+                </span>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              {% if pdata.missing_skills %}
+              <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                <span style="color: var(--text-muted); font-weight: 600;">Missing:</span>
+                {% for s in pdata.missing_skills %}
+                <span style="font-size: 0.68rem; font-family: var(--font-mono); background: rgba(255,255,255,0.06); color: var(--text-muted); padding: 0.1rem 0.4rem; border-radius: 4px;">
+                  ✗ {{ s }}
+                </span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            {% if pdata.requires_override %}
+            <div style="margin-top: 0.6rem; font-size: 0.72rem; color: #F59E0B; display: flex; align-items: center; gap: 0.35rem;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>Requires Administrative Override (Low match score or capacity)</span>
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div style="padding: 2.5rem; text-align: center; color: var(--text-muted); background: var(--bg-card); border-radius: 14px;">
+            No compatible projects found for this intern's duration.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- ── Right Column: Mentor Matching & Finalization Panel ─────────────────── -->
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+        <!-- 2. Mentor Matching Section -->
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <div>
+              <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+                2. Recommended Mentors
+              </h3>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.15rem 0 0;">
+                Ranked by expertise alignment & available mentee capacity
+              </p>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;" id="mentors-container">
+            {% for mdata in recommended_mentors %}
+            {% set m = mdata.mentor %}
+            {% set is_top_mentor = loop.first %}
+            <div class="mentor-card" onclick="selectMentor({{ m.id }})" id="mentor-card-{{ m.id }}"
+                 style="background: var(--bg-card); border: 2px solid {% if is_top_mentor %}#8B5CF6{% else %}var(--border-subtle){% endif %}; border-radius: 12px; padding: 1rem 1.15rem; cursor: pointer; transition: all 0.2s;"
+                 onmouseover="if (!this.classList.contains('selected')) this.style.borderColor='rgba(139,92,246,0.5)'"
+                 onmouseout="if (!this.classList.contains('selected')) this.style.borderColor='var(--border-subtle)'">
+              
+              <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #A78BFA; font-size: 0.95rem;">
+                    {{ m.full_name[:1] }}
+                  </div>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                      <span style="font-weight: 800; font-size: 0.9rem; color: var(--text-primary);">{{ m.full_name }}</span>
+                      {% if mdata.is_recommended %}
+                      <span style="font-size: 0.65rem; font-weight: 700; background: rgba(16,185,129,0.15); color: #34D399; padding: 0.1rem 0.35rem; border-radius: 4px;">Top Match</span>
+                      {% endif %}
+                    </div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted);">
+                      {{ m.department or 'Engineering' }} • {{ m.designation or 'Mentor' }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Suitability Score -->
+                <div style="text-align: right;">
+                  <span style="font-family: var(--font-mono); font-weight: 800; font-size: 0.85rem; color: #A78BFA;">
+                    {{ mdata.suitability_score }} Pts
+                  </span>
+                  <div style="font-size: 0.68rem; color: var(--text-muted);">Suitability</div>
+                </div>
+              </div>
+
+              <!-- Workload Progress Bar & Availability -->
+              <div style="margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
+                    Workload: {{ mdata.active_interns_count }} / {{ mdata.max_capacity }}
+                  </span>
+                  <div style="width: 70px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden;">
+                    <div style="height: 100%; border-radius: 999px; width: {{ mdata.capacity_percent }}%; background: {% if mdata.is_at_capacity %}#EF4444{% else %}#10B981{% endif %};"></div>
+                  </div>
+                </div>
+
+                <span style="font-size: 0.7rem; font-weight: 700; {% if mdata.availability_status == 'AVAILABLE' %}color: #34D399;{% elif mdata.availability_status == 'BUSY' %}color: #FBBF24;{% else %}color: #F87171;{% endif %}">
+                  {{ mdata.availability_status }}
+                </span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- 3. Finalize Allocation & Override Details -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
+          <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            3. Confirm Allocation
+          </h3>
+
+          <!-- Initial Week 1 Deadline -->
+          <div style="margin-bottom: 1rem;">
+            <label class="form-label" style="font-size: 0.78rem;">Project Milestone Initial Deadline</label>
+            <input type="text" name="deadline" class="form-input" value="{{ default_deadline or 'Auto-Scheduled (7 Days from today)' }}" placeholder="e.g. 28 Nov 2026">
+            <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">Week 1 will be immediately available; subsequent milestones unlock upon weekly approval.</span>
+          </div>
+
+          <!-- Administrative Override Reason -->
+          <div style="margin-bottom: 1.25rem;">
+            <label class="form-label" style="font-size: 0.78rem;">Admin Override Reason (Mandatory if score < 50% or at capacity)</label>
+            <textarea name="override_reason" id="override-reason" class="form-textarea" rows="2" placeholder="e.g. Student completed prerequisite Docker boot camp; approved by Head of Engineering"></textarea>
+          </div>
+
+          <!-- Force Override Checkbox -->
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+            <input type="checkbox" name="force_override" value="1" id="force_override" style="accent-color: #10B981;">
+            <label for="force_override" style="font-size: 0.78rem; color: var(--text-muted); cursor: pointer;">
+              Allow administrative capacity or duration override with recorded audit reason
+            </label>
+          </div>
+
+          <!-- Action Button -->
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem 1rem; font-weight: 800; font-size: 0.9rem; background: #10B981; border-color: #059669; box-shadow: 0 4px 14px rgba(16,185,129,0.35);">
+            Confirm & Execute Intelligent Allocation
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </form>
+
+</div>
+
+<script>
+  let selectedProjectId = {{ selected_project.id if selected_project else 0 }};
+  let selectedMentorId = {{ recommended_mentors[0]['mentor'].id if recommended_mentors else 0 }};
+
+  function selectProject(projectId) {
+    selectedProjectId = projectId;
+    document.getElementById('selected-project-id').value = projectId;
+
+    // Update UI highlights
+    document.querySelectorAll('.project-card').forEach(c => {
+      c.style.borderColor = 'var(--border-subtle)';
+      c.classList.remove('selected');
+    });
+    const activeCard = document.getElementById('project-card-' + projectId);
+    if (activeCard) {
+      activeCard.style.borderColor = '#10B981';
+      activeCard.classList.add('selected');
+    }
+
+    // Refresh dynamic mentors via AJAX API
+    fetch(`/admin/allocations/api/mentors/${projectId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.mentors && data.mentors.length > 0) {
+          renderMentors(data.mentors);
+        }
+      })
+      .catch(err => console.error('Error fetching mentors:', err));
+  }
+
+  function selectMentor(mentorId) {
+    selectedMentorId = mentorId;
+    document.getElementById('selected-mentor-id').value = mentorId;
+
+    document.querySelectorAll('.mentor-card').forEach(c => {
+      c.style.borderColor = 'var(--border-subtle)';
+      c.classList.remove('selected');
+    });
+    const activeCard = document.getElementById('mentor-card-' + mentorId);
+    if (activeCard) {
+      activeCard.style.borderColor = '#8B5CF6';
+      activeCard.classList.add('selected');
+    }
+  }
+
+  function renderMentors(mentors) {
+    const container = document.getElementById('mentors-container');
+    container.innerHTML = '';
+
+    mentors.forEach((m, idx) => {
+      const isSelected = (idx === 0);
+      if (isSelected) {
+        selectedMentorId = m.id;
+        document.getElementById('selected-mentor-id').value = m.id;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'mentor-card' + (isSelected ? ' selected' : '');
+      card.id = 'mentor-card-' + m.id;
+      card.style.cssText = `background: var(--bg-card); border: 2px solid ${isSelected ? '#8B5CF6' : 'var(--border-subtle)'}; border-radius: 12px; padding: 1rem 1.15rem; cursor: pointer; transition: all 0.2s;`;
+      card.onclick = () => selectMentor(m.id);
+
+      card.innerHTML = `
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #A78BFA; font-size: 0.95rem;">
+              ${m.name.charAt(0)}
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="font-weight: 800; font-size: 0.9rem; color: var(--text-primary);">${m.name}</span>
+                ${m.is_recommended ? '<span style="font-size: 0.65rem; font-weight: 700; background: rgba(16,185,129,0.15); color: #34D399; padding: 0.1rem 0.35rem; border-radius: 4px;">Top Match</span>' : ''}
+              </div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">
+                ${m.department} • ${m.designation || 'Mentor'}
+              </div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <span style="font-family: var(--font-mono); font-weight: 800; font-size: 0.85rem; color: #A78BFA;">
+              ${m.suitability_score} Pts
+            </span>
+            <div style="font-size: 0.68rem; color: var(--text-muted);">Suitability</div>
+          </div>
+        </div>
+        <div style="margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
+              Workload: ${m.active_interns_count} / ${m.max_capacity}
+            </span>
+          </div>
+          <span style="font-size: 0.7rem; font-weight: 700; color: ${m.availability_status === 'AVAILABLE' ? '#34D399' : '#FBBF24'};">
+            ${m.availability_status}
+          </span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function updateSkills() {
+    const input = document.getElementById('new-skills-input');
+    const skills = input.value.trim();
+    if (!skills) return;
+
+    fetch(`/admin/allocations/api/students/{{ student.id }}/skills`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({ skills: skills })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Reload wizard with updated skills
+        window.location.reload();
+      }
+    })
+    .catch(err => console.error('Error updating skills:', err));
+  }
+</script>
+{% endblock %}

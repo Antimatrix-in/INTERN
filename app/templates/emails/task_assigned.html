@@ -1,0 +1,45 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-info">Task Assignment</span>
+</div>
+<h2 class="headline">New Milestone Task Assigned</h2>
+<p>Hello <strong>{{ recipient_name|default('Intern') }}</strong>,</p>
+<p>A new technical task has been assigned for your internship track:</p>
+
+<div class="detail-card">
+  <table width="100%" cellpadding="4" cellspacing="0">
+    <tr>
+      <td width="35%" style="color:#64748B; font-weight:600; font-size:13px;">Week / Milestone:</td>
+      <td style="color:#0F172A; font-weight:700; font-size:13px;">Week {{ week_number }} — {{ milestone_title }}</td>
+    </tr>
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Task Title:</td>
+      <td style="color:#0F172A; font-weight:600; font-size:13px;">{{ task_title }}</td>
+    </tr>
+    {% if assigned_by %}
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Assigned By:</td>
+      <td style="color:#0F172A; font-size:13px;">{{ assigned_by }}</td>
+    </tr>
+    {% endif %}
+    {% if due_date_str %}
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Deadline:</td>
+      <td style="color:#DC2626; font-weight:700; font-size:13px;">{{ due_date_str }}</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+<p>Please review the technical deliverables, checklist criteria, and submission guidelines in your portal workspace:</p>
+
+<center>
+  <a href="{{ action_url|default('#') }}" class="cta-button">Open Workspace &amp; View Task &rarr;</a>
+</center>
+
+<p style="font-size:12px; color:#64748B; margin-top:20px;">
+  Make sure to commit your progress frequently to GitHub and keep your mentor updated on blockers.
+</p>
+{% endblock %}

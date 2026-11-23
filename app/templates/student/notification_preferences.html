@@ -1,0 +1,125 @@
+{% extends 'student/base_student.html' %}
+
+{% block title %}Notification Preferences — ANTI MATRIX{% endblock %}
+{% block breadcrumb_title %}Notification Preferences{% endblock %}
+
+{% block content %}
+<div class="workspace-preferences" style="max-width: 800px; margin: 0 auto; padding-bottom: 40px;">
+  <!-- Header -->
+  <header class="page-top-header" style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 class="page-main-title" style="margin: 0 0 6px 0; font-size: 24px; font-weight: 700;">Communication Preferences</h1>
+        <p class="page-main-subtitle" style="margin: 0; color: #94A3B8; font-size: 14px;">
+          Configure how you receive milestone notifications, automated deadline alerts, and system broadcasts.
+        </p>
+      </div>
+      <a href="{{ url_for('student.notifications') }}" class="btn btn-secondary btn-sm" style="font-size: 13px;">
+        &larr; Back to Notifications
+      </a>
+    </div>
+  </header>
+
+  <!-- Preferences Form Card -->
+  <div class="card" style="background: #0B130E; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; padding: 28px;">
+    <form method="POST" action="{{ url_for('student.notification_preferences') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div style="margin-bottom: 28px; border-bottom: 1px solid rgba(148, 163, 184, 0.12); padding-bottom: 18px;">
+        <h2 style="font-size: 16px; font-weight: 700; color: #10B981; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.8px;">
+          Delivery Channels
+        </h2>
+        <p style="margin: 0; font-size: 13px; color: #94A3B8;">Choose the core channels through which alerts will be dispatched.</p>
+      </div>
+
+      <!-- In-Portal Channel Toggle -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.08);">
+        <div>
+          <div style="font-weight: 600; color: #F8FAFC; font-size: 15px; margin-bottom: 4px;">In-Portal Notifications</div>
+          <div style="font-size: 13px; color: #94A3B8;">Display notifications in your portal feed and notification bell badge.</div>
+        </div>
+        <label style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
+          <input type="checkbox" name="in_portal_enabled" {% if preferences.in_portal_enabled %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+          <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {% if preferences.in_portal_enabled %}#10B981{% else %}#334155{% endif %}; transition: .3s; border-radius: 24px;">
+            <span style="position: absolute; height: 18px; width: 18px; left: {% if preferences.in_portal_enabled %}23px{% else %}3px{% endif %}; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"></span>
+          </span>
+        </label>
+      </div>
+
+      <!-- Email Channel Toggle -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.08);">
+        <div>
+          <div style="font-weight: 600; color: #F8FAFC; font-size: 15px; margin-bottom: 4px;">Email Delivery</div>
+          <div style="font-size: 13px; color: #94A3B8;">Send branded email updates to <strong>{{ current_user.email }}</strong>.</div>
+        </div>
+        <label style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
+          <input type="checkbox" name="email_enabled" {% if preferences.email_enabled %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+          <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {% if preferences.email_enabled %}#10B981{% else %}#334155{% endif %}; transition: .3s; border-radius: 24px;">
+            <span style="position: absolute; height: 18px; width: 18px; left: {% if preferences.email_enabled %}23px{% else %}3px{% endif %}; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"></span>
+          </span>
+        </label>
+      </div>
+
+      <div style="margin: 28px 0 16px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.12); padding-bottom: 12px;">
+        <h2 style="font-size: 16px; font-weight: 700; color: #10B981; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.8px;">
+          Category Subscriptions
+        </h2>
+        <p style="margin: 0; font-size: 13px; color: #94A3B8;">Control which specific categories trigger external email notifications.</p>
+      </div>
+
+      <!-- Deadline Reminders -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.08);">
+        <div>
+          <div style="font-weight: 600; color: #F8FAFC; font-size: 15px; margin-bottom: 4px;">Milestone Deadline Reminders</div>
+          <div style="font-size: 13px; color: #94A3B8;">Automated reminders 3 days before, 1 day before, and deadline day.</div>
+        </div>
+        <label style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
+          <input type="checkbox" name="deadline_reminders" {% if preferences.deadline_reminders %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+          <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {% if preferences.deadline_reminders %}#10B981{% else %}#334155{% endif %}; transition: .3s; border-radius: 24px;">
+            <span style="position: absolute; height: 18px; width: 18px; left: {% if preferences.deadline_reminders %}23px{% else %}3px{% endif %}; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"></span>
+          </span>
+        </label>
+      </div>
+
+      <!-- Broadcast Announcements -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.08);">
+        <div>
+          <div style="font-weight: 600; color: #F8FAFC; font-size: 15px; margin-bottom: 4px;">Portal &amp; Mentor Broadcasts</div>
+          <div style="font-size: 13px; color: #94A3B8;">System-wide announcements and technical briefings from your mentor.</div>
+        </div>
+        <label style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
+          <input type="checkbox" name="announcements" {% if preferences.announcements %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+          <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {% if preferences.announcements %}#10B981{% else %}#334155{% endif %}; transition: .3s; border-radius: 24px;">
+            <span style="position: absolute; height: 18px; width: 18px; left: {% if preferences.announcements %}23px{% else %}3px{% endif %}; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"></span>
+          </span>
+        </label>
+      </div>
+
+      <!-- Evaluation & Review Alerts -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.08);">
+        <div>
+          <div style="font-weight: 600; color: #F8FAFC; font-size: 15px; margin-bottom: 4px;">Evaluation &amp; Review Alerts</div>
+          <div style="font-size: 13px; color: #94A3B8;">Submission approval, revision requests, and rubric scorecard updates.</div>
+        </div>
+        <label style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
+          <input type="checkbox" name="evaluations" {% if preferences.evaluations %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+          <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {% if preferences.evaluations %}#10B981{% else %}#334155{% endif %}; transition: .3s; border-radius: 24px;">
+            <span style="position: absolute; height: 18px; width: 18px; left: {% if preferences.evaluations %}23px{% else %}3px{% endif %}; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"></span>
+          </span>
+        </label>
+      </div>
+
+      <!-- Notice regarding mandatory security alerts -->
+      <div style="margin: 20px 0; padding: 14px 18px; background: rgba(148, 163, 184, 0.05); border: 1px dashed rgba(148, 163, 184, 0.2); border-radius: 6px; font-size: 12px; color: #94A3B8;">
+        <strong>Note:</strong> Critical security notices, password change confirmations, and account verification credentials cannot be disabled.
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; font-size: 14px;">
+          Save Preferences
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

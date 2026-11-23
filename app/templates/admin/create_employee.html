@@ -1,226 +1,533 @@
 {% extends 'admin/base_admin.html' %}
 
-{% block title %}Create Employee — ANTI MATRIX Admin{% endblock %}
+{% block title %}Register Intern — ANTI MATRIX Admin{% endblock %}
 
 {% block content %}
-<div style="padding: 2rem 2.5rem; max-width: 900px;">
+<div style="padding: 2rem 2.5rem; max-width: 960px; margin: 0 auto;">
 
+  <!-- Header & Back Navigation -->
   <div style="margin-bottom: 1.75rem;">
     <a href="{{ url_for('admin.employees_list') }}" style="display:inline-flex;align-items:center;gap:0.4rem;color:var(--text-muted);font-size:0.85rem;text-decoration:none;margin-bottom:0.75rem;" onmouseover="this.style.color='#60A5FA'" onmouseout="this.style.color='var(--text-muted)'">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      Back to Employees
+      Back to Intern Directory
     </a>
-    <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.25rem;">Create Employee</h1>
-    <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">Convert an approved career application into an active employee account</p>
+    <h1 style="font-size: 1.65rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.25rem;">Intern Registration & Onboarding</h1>
+    <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">Register new interns directly or import verified applications from the careers portal</p>
   </div>
 
   {% if created %}
-  <!-- ── SUCCESS: Show generated credentials ───────────────────────────────── -->
-  <div style="background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04)); border: 1px solid rgba(16,185,129,0.3); border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
-    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
-      <div style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  <!-- ── SUCCESS SCREEN: Credentials & Onboarding Summary ───────────────────── -->
+  <div style="background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.03)); border: 1px solid rgba(16,185,129,0.3); border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
+    <div style="display:flex;align-items:center;gap:0.85rem;margin-bottom:1.5rem;">
+      <div style="width:48px;height:48px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;color:#34D399;flex-shrink:0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div>
-        <div style="font-weight:800;font-size:1.1rem;color:#34D399;">Employee Created Successfully!</div>
-        <div style="color:var(--text-muted);font-size:0.85rem;">{{ created_name }} has been onboarded to the ANTI MATRIX Internship Portal.</div>
+        <div style="font-weight:800;font-size:1.2rem;color:#34D399;">Intern Successfully Registered!</div>
+        <div style="color:var(--text-muted);font-size:0.875rem;"><strong style="color:var(--text-primary);">{{ created_name }}</strong> has been onboarded with status <span class="badge" style="background:rgba(16,185,129,0.15);color:#34D399;font-weight:700;font-size:0.75rem;padding:0.15rem 0.5rem;border-radius:4px;">{{ created_status or 'ACTIVE' }}</span>.</div>
       </div>
     </div>
 
-    <div style="background:rgba(0,0,0,0.25);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;">
-      <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem;">Login Credentials & Assigned Problem</div>
+    <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+      <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem;">Generated Login Credentials & Access Details</div>
       
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));gap:1rem;margin-bottom:1rem;">
         <div>
-          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">Employee ID (Login)</div>
-          <div style="font-family:var(--font-mono);font-size:1.05rem;color:#60A5FA;font-weight:700;background:rgba(59,130,246,0.1);padding:0.5rem 0.85rem;border-radius:8px;letter-spacing:0.05em;">{{ created_employee_id }}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">Intern / Employee ID (Username)</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div style="font-family:var(--font-mono);font-size:1.1rem;color:#60A5FA;font-weight:700;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);padding:0.5rem 0.85rem;border-radius:8px;flex:1;" id="createdEmpIdVal">{{ created_employee_id }}</div>
+            <button type="button" onclick="navigator.clipboard.writeText('{{ created_employee_id }}'); alert('Employee ID copied to clipboard!');" class="btn btn-secondary" style="padding:0.5rem 0.75rem;font-size:0.8rem;" title="Copy ID">
+              Copy
+            </button>
+          </div>
         </div>
         <div>
-          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">Temporary Password</div>
-          <div style="font-family:var(--font-mono);font-size:1.05rem;color:#34D399;font-weight:700;background:rgba(16,185,129,0.1);padding:0.5rem 0.85rem;border-radius:8px;letter-spacing:0.05em;" id="tempPasswordDisplay">{{ created_temp_password }}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">Temporary One-Time Password</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div style="font-family:var(--font-mono);font-size:1.1rem;color:#34D399;font-weight:700;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);padding:0.5rem 0.85rem;border-radius:8px;flex:1;" id="tempPasswordDisplay">{{ created_temp_password }}</div>
+            <button type="button" onclick="navigator.clipboard.writeText('{{ created_temp_password }}'); alert('Password copied to clipboard!');" class="btn btn-secondary" style="padding:0.5rem 0.75rem;font-size:0.8rem;" title="Copy Password">
+              Copy
+            </button>
+          </div>
         </div>
       </div>
 
       {% if created_problem_id %}
-      <div style="padding:0.85rem 1rem;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:10px;margin-bottom:1rem;">
-        <div style="font-size:0.72rem;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.25rem;">Automatically Allocated Problem</div>
+      <div style="padding:0.85rem 1rem;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);border-radius:10px;margin-bottom:1rem;">
+        <div style="font-size:0.72rem;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.25rem;">Allocated Internship Project</div>
         <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
           <span class="mono" style="background:#8B5CF6;color:#FFF;font-weight:800;font-size:0.85rem;padding:0.2rem 0.6rem;border-radius:6px;">{{ created_problem_id }}</span>
-          <strong style="color:#F8FAFC;font-size:0.95rem;">{{ created_problem_title }}</strong>
+          <strong style="color:var(--text-primary);font-size:0.95rem;">{{ created_problem_title }}</strong>
         </div>
       </div>
       {% endif %}
 
-      <div style="margin-top:0.85rem;padding:0.6rem 0.85rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;display:flex;align-items:center;gap:0.5rem;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span style="font-size:0.78rem;color:#FBBF24;font-weight:600;">This temporary password is shown ONLY ONCE. Copy and share it securely with the employee.</span>
+      <div style="padding:0.75rem 1rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;display:flex;align-items:center;gap:0.6rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span style="font-size:0.8rem;color:#FBBF24;font-weight:600;">Secure Password Notice: This temporary password is generated securely. Share it with the intern through official channels.</span>
       </div>
-      <div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);">
-        Email: <strong style="color:var(--text-primary);">{{ created_email }}</strong>
+
+      <div style="margin-top:0.85rem;font-size:0.85rem;color:var(--text-muted);">
+        Registered Email: <strong style="color:var(--text-primary);">{{ created_email }}</strong>
       </div>
     </div>
 
     <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-      <a href="{{ url_for('admin.employees_list') }}" class="btn btn-primary" style="display:flex;align-items:center;gap:0.5rem;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-        View All Employees
+      {% if created_student_id %}
+      <a href="{{ url_for('admin.employee_detail', student_id=created_student_id) }}" class="btn btn-primary" style="display:flex;align-items:center;gap:0.5rem;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        View Intern Profile
       </a>
-      <a href="{{ url_for('admin.create_employee') }}" class="btn btn-secondary">Create Another Employee</a>
-      <a href="{{ url_for('admin.employee_tasks') }}" class="btn btn-secondary">Manage Employee Tasks</a>
+      {% endif %}
+      <a href="{{ url_for('admin.employees_list') }}" class="btn btn-secondary">
+        Intern Directory
+      </a>
+      <a href="{{ url_for('admin.create_employee') }}" class="btn btn-secondary">
+        + Register Another Intern
+      </a>
     </div>
   </div>
 
   {% else %}
-  <!-- ── APPLICATION LOOKUP FORM ────────────────────────────────────────────── -->
-  <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem;">
-    <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); background: rgba(59,130,246,0.04);">
-      <h2 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.2rem;">Step 1: Lookup Application ID</h2>
-      <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Enter the candidate's Application ID from the careers portal to fetch their details</p>
-    </div>
-    <div style="padding: 1.5rem;">
-      <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
-        <div style="flex: 1; position: relative;">
-          <input type="text" id="applicationIdInput" placeholder="e.g. AM-APP-2026-001"
-                 style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px; color: var(--text-primary); font-size: 0.9rem; font-family: var(--font-mono); outline: none; transition: border-color 0.2s;"
-                 onfocus="this.style.borderColor='rgba(59,130,246,0.5)'"
-                 onblur="this.style.borderColor='var(--border-subtle)'"
-                 oninput="this.value = this.value.toUpperCase()">
-        </div>
-        <button type="button" id="fetchBtn" onclick="fetchApplicationDetails()" class="btn btn-primary" style="display:flex;align-items:center;gap:0.5rem;white-space:nowrap;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span id="fetchBtnText">FETCH DETAILS</span>
-        </button>
-      </div>
-      <div id="lookupError" style="display:none; padding: 0.75rem 1rem; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; color: #F87171; font-size: 0.85rem; margin-bottom: 1rem;"></div>
-      <div style="font-size:0.78rem; color: var(--text-muted);">
-        Test Application IDs: <span style="font-family:var(--font-mono); color:#60A5FA; cursor:pointer;" onclick="document.getElementById('applicationIdInput').value='AM-APP-2026-001'">AM-APP-2026-001</span> ·
-        <span style="font-family:var(--font-mono); color:#60A5FA; cursor:pointer;" onclick="document.getElementById('applicationIdInput').value='AM-APP-2026-002'">AM-APP-2026-002</span> ·
-        <span style="font-family:var(--font-mono); color:#60A5FA; cursor:pointer;" onclick="document.getElementById('applicationIdInput').value='AM-APP-2026-003'">AM-APP-2026-003</span>
-      </div>
-    </div>
+
+  <!-- ── REGISTRATION MODE TABS ─────────────────────────────────────────────── -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+    <button type="button" id="tabBtnManual" onclick="switchRegistrationTab('manual')"
+            style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.875rem; font-weight: 700; cursor: pointer; border: 1px solid rgba(59,130,246,0.3); background: rgba(59,130,246,0.12); color: #60A5FA; transition: all 0.2s;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Direct Manual Registration
+    </button>
+    <button type="button" id="tabBtnImport" onclick="switchRegistrationTab('import')"
+            style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.875rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border-subtle); background: transparent; color: var(--text-muted); transition: all 0.2s;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Import from Career Portal
+    </button>
   </div>
 
-  <!-- ── CANDIDATE DETAILS CARD (shown after fetch) ─────────────────────────── -->
-  <div id="candidateCard" style="display:none; background: var(--bg-card); border: 1px solid rgba(59,130,246,0.3); border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem;">
-    <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); background: rgba(59,130,246,0.06); display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
-      <div style="display:flex;align-items:center;gap:0.75rem;">
-        <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  <!-- ── TAB 1: DIRECT MANUAL REGISTRATION FORM ─────────────────────────────── -->
+  <div id="sectionManualRegistration" style="display: block;">
+    <form method="POST" action="{{ url_for('admin.create_employee') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="reg_mode" value="manual">
+
+      <!-- Section A: Personal & Contact Information -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+          <div style="width:30px;height:30px;border-radius:8px;background:rgba(59,130,246,0.12);color:#60A5FA;display:flex;align-items:center;justify-content:center;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div>
+            <h2 style="font-size:0.95rem;font-weight:700;color:var(--text-primary);margin:0;">1. Personal & Contact Information</h2>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Identity, email, and communication coordinates</p>
+          </div>
         </div>
-        <div>
-          <h2 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0;">APPLICATION DETAILS</h2>
-          <p style="font-size: 0.8rem; color: #34D399; margin: 0;">Application verified from Career Portal database</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem;">
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Full Name <span style="color:#EF4444;">*</span>
+            </label>
+            <input type="text" name="full_name" required placeholder="e.g. Aarav Sharma"
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Email Address <span style="color:#EF4444;">*</span>
+            </label>
+            <input type="email" name="email" required placeholder="e.g. aarav.sharma@gmail.com"
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Phone Number
+            </label>
+            <input type="tel" name="phone" placeholder="+91 9876543210"
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Gender
+            </label>
+            <select name="gender" style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+              <option value="">-- Select Gender --</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Date of Birth
+            </label>
+            <input type="date" name="dob"
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+          </div>
         </div>
       </div>
-      <div id="statusBadgeContainer"></div>
+
+      <!-- Section B: Academic & College Information -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+          <div style="width:30px;height:30px;border-radius:8px;background:rgba(139,92,246,0.12);color:#A78BFA;display:flex;align-items:center;justify-content:center;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          </div>
+          <div>
+            <h2 style="font-size:0.95rem;font-weight:700;color:var(--text-primary);margin:0;">2. Academic & Institutional Information</h2>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Enrolled college, department, graduation year, and degree</p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem;">
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Select Enrolled College
+            </label>
+            <select name="college_id" id="collegeSelectManual" style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+              {% for col in colleges %}
+                <option value="{{ col.id }}">{{ col.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Or Custom College Name
+            </label>
+            <input type="text" name="custom_college" placeholder="If not listed in dropdown"
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Department
+            </label>
+            <select name="department_id" style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+              {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Degree / Program
+            </label>
+            <input type="text" name="degree" value="B.Tech Computer Science" placeholder="e.g. B.Tech / B.E."
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Academic Year
+            </label>
+            <select name="academic_year" style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year" selected>3rd Year</option>
+              <option value="4th Year">4th Year</option>
+              <option value="Postgraduate">Postgraduate</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Student Roll Number / Reg No
+            </label>
+            <input type="text" name="roll_number" placeholder="Leave blank to use auto ID"
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;font-family:var(--font-mono);outline:none;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section C: Internship Track & Allocation -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+          <div style="width:30px;height:30px;border-radius:8px;background:rgba(16,185,129,0.12);color:#34D399;display:flex;align-items:center;justify-content:center;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <div>
+            <h2 style="font-size:0.95rem;font-weight:700;color:var(--text-primary);margin:0;">3. Internship Track, Dates & Mentor</h2>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Duration plan, lifecycle state, start/end timelines, and supervisor</p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem;">
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Internship Program Track
+            </label>
+            <select name="duration_plan" style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;font-weight:600;outline:none;">
+              <option value="1_MONTH_PROJECT" selected>1 Month Project Internship (4 Weeks)</option>
+              <option value="3_MONTH_PROFESSIONAL">3 Months Professional Internship (12 Weeks)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Initial Lifecycle Status
+            </label>
+            <select name="initial_status" style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;font-weight:600;outline:none;">
+              <option value="ACTIVE" selected>ACTIVE (In Progress)</option>
+              <option value="ALLOCATED">ALLOCATED (Project Assigned)</option>
+              <option value="ONBOARDING">ONBOARDING (Setup / Docs)</option>
+              <option value="REGISTERED">REGISTERED (Pending Onboarding)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Internship Start Date
+            </label>
+            <input type="date" name="start_date" id="manualStartDate"
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Internship End Date (Optional)
+            </label>
+            <input type="date" name="end_date" id="manualEndDate"
+                   style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Supervising Technical Mentor
+            </label>
+            <select name="mentor_id" style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+              <option value="">-- Auto Assign First Available --</option>
+              {% for m in approved_mentors %}
+                <option value="{{ m.id }}">{{ m.full_name }} ({{ m.email }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;">
+              Assign Project (Optional)
+            </label>
+            <select name="project_id" style="width:100%;box-sizing:border-box;padding:0.65rem 0.85rem;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;">
+              <option value="">-- Assign Later via Directory --</option>
+              {% for prj in projects %}
+                <option value="{{ prj.id }}">[{{ prj.project_code }}] {{ prj.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section D: Document Upload -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border-subtle);">
+          <div style="width:30px;height:30px;border-radius:8px;background:rgba(245,158,11,0.12);color:#FBBF24;display:flex;align-items:center;justify-content:center;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div>
+            <h2 style="font-size:0.95rem;font-weight:700;color:var(--text-primary);margin:0;">4. Document Upload (Resume / College ID)</h2>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Upload intern's verification document (PDF, DOCX, PNG, JPG)</p>
+          </div>
+        </div>
+
+        <div>
+          <input type="file" name="document" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                 style="width:100%;box-sizing:border-box;padding:0.75rem;background:var(--bg-input);border:1px dashed var(--border-subtle);border-radius:8px;color:var(--text-primary);font-size:0.85rem;cursor:pointer;">
+          <span style="font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem;display:block;">
+            Supported formats: PDF, DOCX, PNG, JPEG. Max file size: 10 MB.
+          </span>
+        </div>
+      </div>
+
+      <!-- Submit Action Bar -->
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:0.85rem;">
+        <a href="{{ url_for('admin.employees_list') }}" class="btn btn-secondary" style="padding:0.75rem 1.25rem;">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-primary" style="padding:0.75rem 1.75rem;font-weight:700;font-size:0.95rem;display:inline-flex;align-items:center;gap:0.5rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Register & Onboard Intern
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── TAB 2: CAREER APPLICATION ID IMPORT FORM ───────────────────────────── -->
+  <div id="sectionImportRegistration" style="display: none;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem;">
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); background: rgba(59,130,246,0.04);">
+        <h2 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.2rem;">Step 1: Lookup Application ID</h2>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Enter the candidate's Application ID from the careers portal to fetch verified details</p>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="flex: 1; position: relative;">
+            <input type="text" id="applicationIdInput" placeholder="e.g. AM-APP-2026-001"
+                   style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px; color: var(--text-primary); font-size: 0.9rem; font-family: var(--font-mono); outline: none; transition: border-color 0.2s;"
+                   onfocus="this.style.borderColor='rgba(59,130,246,0.5)'"
+                   onblur="this.style.borderColor='var(--border-subtle)'"
+                   oninput="this.value = this.value.toUpperCase()">
+          </div>
+          <button type="button" id="fetchBtn" onclick="fetchApplicationDetails()" class="btn btn-primary" style="display:flex;align-items:center;gap:0.5rem;white-space:nowrap;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span id="fetchBtnText">FETCH DETAILS</span>
+          </button>
+        </div>
+        <div id="lookupError" style="display:none; padding: 0.75rem 1rem; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; color: #F87171; font-size: 0.85rem; margin-bottom: 1rem;"></div>
+        <div style="font-size:0.78rem; color: var(--text-muted);">
+          Test Application IDs: <span style="font-family:var(--font-mono); color:#60A5FA; cursor:pointer;" onclick="document.getElementById('applicationIdInput').value='AM-APP-2026-001'">AM-APP-2026-001</span> ·
+          <span style="font-family:var(--font-mono); color:#60A5FA; cursor:pointer;" onclick="document.getElementById('applicationIdInput').value='AM-APP-2026-002'">AM-APP-2026-002</span> ·
+          <span style="font-family:var(--font-mono); color:#60A5FA; cursor:pointer;" onclick="document.getElementById('applicationIdInput').value='AM-APP-2026-003'">AM-APP-2026-003</span>
+        </div>
+      </div>
     </div>
 
-    <div style="padding: 1.5rem;">
-      <!-- Existing Employee Warning Banner (if already converted) -->
-      <div id="alreadyExistsBanner" style="display:none; padding: 1rem 1.25rem; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 12px; margin-bottom: 1.5rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
-          <div style="display:flex;align-items:center;gap:0.75rem;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <div>
-              <div style="font-weight:700;color:#FBBF24;font-size:0.9rem;" id="alreadyExistsMsg">Employee already exists.</div>
-              <div style="font-size:0.8rem;color:var(--text-muted);">This candidate has already been onboarded to the Internship Portal.</div>
-            </div>
+    <!-- Candidate Details Card (shown after fetch) -->
+    <div id="candidateCard" style="display:none; background: var(--bg-card); border: 1px solid rgba(59,130,246,0.3); border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem;">
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); background: rgba(59,130,246,0.06); display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <a id="viewEmployeeLink" href="#" class="btn btn-secondary" style="font-size:0.85rem;padding:0.45rem 1rem;">View Employee Profile →</a>
-        </div>
-      </div>
-
-      <!-- Application Details Key-Value Grid -->
-      <div style="margin-bottom: 1.5rem;">
-        <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Applicant Details
-        </div>
-        <div id="applicantGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem;">
-          <!-- populated by JS -->
-        </div>
-
-        <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;border-top:1px solid var(--border-subtle);padding-top:1rem;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Employee & Problem Allocation
-        </div>
-        <div id="employeeGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.85rem;">
-          <!-- populated by JS -->
-        </div>
-      </div>
-
-      <!-- Automatically Allocated Problem Preview Card -->
-      <div id="allocatedProblemPreviewBox" style="display:none; padding: 1.25rem; background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.3); border-radius: 12px; margin-bottom: 1.5rem;">
-        <div style="font-size:0.72rem;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.35rem;">
-          🎯 Automatically Allocated Problem (Same-College Unique)
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
           <div>
-            <span class="mono" id="allocProblemId" style="background:#8B5CF6;color:#FFF;font-weight:800;font-size:0.85rem;padding:0.2rem 0.6rem;border-radius:6px;margin-right:0.5rem;">P1M-001</span>
-            <strong id="allocProblemTitle" style="color:#F8FAFC;font-size:0.95rem;">AI Resume Analyzer & Job Recommendation System</strong>
+            <h2 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0;">APPLICATION DETAILS</h2>
+            <p style="font-size: 0.8rem; color: #34D399; margin: 0;">Application verified from Career Portal database</p>
           </div>
-          <span id="allocProblemDomain" style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(59,130,246,0.15);color:#60A5FA;font-weight:600;">AI & ML</span>
         </div>
+        <div id="statusBadgeContainer"></div>
       </div>
 
-      <!-- Allocation Warning Banner (if problem pool exhausted for college) -->
-      <div id="allocationWarningBox" style="display:none; padding: 1rem 1.25rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); border-radius: 12px; margin-bottom: 1.5rem; color: #F87171; font-size: 0.875rem;">
-        <div style="display:flex;align-items:center;gap:0.65rem;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span id="allocationWarningText">No available problems for this college. Please add or upload another problem.</span>
+      <div style="padding: 1.5rem;">
+        <!-- Existing Employee Warning Banner (if already converted) -->
+        <div id="alreadyExistsBanner" style="display:none; padding: 1rem 1.25rem; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 12px; margin-bottom: 1.5rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div>
+                <div style="font-weight:700;color:#FBBF24;font-size:0.9rem;" id="alreadyExistsMsg">Employee already exists.</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);">This candidate has already been onboarded to the Internship Portal.</div>
+              </div>
+            </div>
+            <a id="viewEmployeeLink" href="#" class="btn btn-secondary" style="font-size:0.85rem;padding:0.45rem 1rem;">View Employee Profile →</a>
+          </div>
         </div>
-      </div>
 
-      <!-- Internship Configuration & Creation Form -->
-      <div id="createSection" style="border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; margin-top: 0.5rem;">
-        <!-- Submit Form -->
-        <form id="createEmployeeForm" method="POST" action="{{ url_for('admin.create_employee') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="hidden" id="hiddenApplicationNo" name="application_no" value="">
-          <input type="hidden" id="hiddenDurationPlan" name="duration_plan" value="1_MONTH_PROJECT">
+        <!-- Application Details Key-Value Grid -->
+        <div style="margin-bottom: 1.5rem;">
+          <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Applicant Details
+          </div>
+          <div id="applicantGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem;">
+            <!-- populated by JS -->
+          </div>
 
-          <button type="submit" id="btnSubmitCreate" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem;font-size:0.95rem;font-weight:700;display:flex;align-items:center;gap:0.6rem;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-            CONFIRM & CREATE EMPLOYEE
-          </button>
-          <p style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-top:0.75rem;">
-            Atomically creates employee account, allocates the unique Problem ID, and generates the weekly milestone roadmap.
-          </p>
-        </form>
+          <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;border-top:1px solid var(--border-subtle);padding-top:1rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Employee & Problem Allocation
+          </div>
+          <div id="employeeGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.85rem;">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <!-- Automatically Allocated Problem Preview Card -->
+        <div id="allocatedProblemPreviewBox" style="display:none; padding: 1.25rem; background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.3); border-radius: 12px; margin-bottom: 1.5rem;">
+          <div style="font-size:0.72rem;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.35rem;">
+            🎯 Automatically Allocated Problem (Same-College Unique)
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
+            <div>
+              <span class="mono" id="allocProblemId" style="background:#8B5CF6;color:#FFF;font-weight:800;font-size:0.85rem;padding:0.2rem 0.6rem;border-radius:6px;margin-right:0.5rem;">P1M-001</span>
+              <strong id="allocProblemTitle" style="color:var(--text-primary);font-size:0.95rem;">AI Resume Analyzer & Job Recommendation System</strong>
+            </div>
+            <span id="allocProblemDomain" style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(59,130,246,0.15);color:#60A5FA;font-weight:600;">AI & ML</span>
+          </div>
+        </div>
+
+        <!-- Allocation Warning Banner (if problem pool exhausted for college) -->
+        <div id="allocationWarningBox" style="display:none; padding: 1rem 1.25rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); border-radius: 12px; margin-bottom: 1.5rem; color: #F87171; font-size: 0.875rem;">
+          <div style="display:flex;align-items:center;gap:0.65rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="allocationWarningText">No available problems for this college. Please add or upload another problem.</span>
+          </div>
+        </div>
+
+        <!-- Internship Configuration & Creation Form -->
+        <div id="createSection" style="border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; margin-top: 0.5rem;">
+          <!-- Submit Form -->
+          <form id="createEmployeeForm" method="POST" action="{{ url_for('admin.create_employee') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="hiddenApplicationNo" name="application_no" value="">
+            <input type="hidden" id="hiddenDurationPlan" name="duration_plan" value="1_MONTH_PROJECT">
+
+            <button type="submit" id="btnSubmitCreate" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.85rem;font-size:0.95rem;font-weight:700;display:flex;align-items:center;gap:0.6rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+              CONFIRM & CREATE EMPLOYEE
+            </button>
+            <p style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-top:0.75rem;">
+              Atomically creates employee account, allocates the unique Problem ID, and generates the weekly milestone roadmap.
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 
   {% endif %}
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+  function switchRegistrationTab(tab) {
+    const secManual = document.getElementById('sectionManualRegistration');
+    const secImport = document.getElementById('sectionImportRegistration');
+    const btnManual = document.getElementById('tabBtnManual');
+    const btnImport = document.getElementById('tabBtnImport');
+
+    if (tab === 'manual') {
+      secManual.style.display = 'block';
+      secImport.style.display = 'none';
+      btnManual.style.background = 'rgba(59,130,246,0.12)';
+      btnManual.style.color = '#60A5FA';
+      btnManual.style.borderColor = 'rgba(59,130,246,0.3)';
+      btnManual.style.fontWeight = '700';
+
+      btnImport.style.background = 'transparent';
+      btnImport.style.color = 'var(--text-muted)';
+      btnImport.style.borderColor = 'var(--border-subtle)';
+      btnImport.style.fontWeight = '600';
+    } else {
+      secManual.style.display = 'none';
+      secImport.style.display = 'block';
+      btnImport.style.background = 'rgba(59,130,246,0.12)';
+      btnImport.style.color = '#60A5FA';
+      btnImport.style.borderColor = 'rgba(59,130,246,0.3)';
+      btnImport.style.fontWeight = '700';
+
+      btnManual.style.background = 'transparent';
+      btnManual.style.color = 'var(--text-muted)';
+      btnManual.style.borderColor = 'var(--border-subtle)';
+      btnManual.style.fontWeight = '600';
+    }
+  }
+
   let selectedPlan = '1_MONTH_PROJECT';
 
   function selectPlan(val) {
     selectedPlan = val;
-    document.getElementById('hiddenDurationPlan').value = val;
-
-    const p1 = document.getElementById('plan1m');
-    const p3 = document.getElementById('plan3m');
-
-    if (val === '1_MONTH_PROJECT') {
-      p1.style.borderColor = 'rgba(59,130,246,0.5)';
-      p1.style.background = 'rgba(59,130,246,0.08)';
-      p3.style.borderColor = 'rgba(255,255,255,0.06)';
-      p3.style.background = 'transparent';
-    } else {
-      p3.style.borderColor = 'rgba(59,130,246,0.5)';
-      p3.style.background = 'rgba(59,130,246,0.08)';
-      p1.style.borderColor = 'rgba(255,255,255,0.06)';
-      p1.style.background = 'transparent';
-    }
+    const hdp = document.getElementById('hiddenDurationPlan');
+    if (hdp) hdp.value = val;
   }
 
   async function fetchApplicationDetails() {
-    const appId = document.getElementById('applicationIdInput').value.trim();
+    const appIdInput = document.getElementById('applicationIdInput');
+    if (!appIdInput) return;
+    const appId = appIdInput.value.trim();
     const errEl = document.getElementById('lookupError');
     const btn = document.getElementById('fetchBtn');
     const btnText = document.getElementById('fetchBtnText');
@@ -258,7 +565,6 @@
   function showCandidateCard(data) {
     document.getElementById('hiddenApplicationNo').value = data.application_no;
 
-    // Set duration plan
     if (data.duration_plan) {
       selectPlan(data.duration_plan);
     }
@@ -277,8 +583,8 @@
     ];
 
     const employeeFields = [
-      { label: 'Employee ID', value: data.employee_id || 'AM-EMP-001', isMono: true, color: '#FBBF24' },
-      { label: 'Username', value: data.username || data.candidate_email || 'john@example.com', color: '#E2E8F0' }
+      { label: 'Employee ID', value: data.employee_id || 'AM-INT-001', isMono: true, color: '#FBBF24' },
+      { label: 'Username', value: data.username || data.candidate_email || 'intern@antimatrix.tech', color: '#E2E8F0' }
     ];
 
     const appGrid = document.getElementById('applicantGrid');
@@ -342,8 +648,14 @@
     document.getElementById('candidateCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // Allow pressing Enter on the input to trigger fetch
+  // Pre-fill today's date for manual registration
   document.addEventListener('DOMContentLoaded', () => {
+    const startInp = document.getElementById('manualStartDate');
+    if (startInp && !startInp.value) {
+      const today = new Date().toISOString().split('T')[0];
+      startInp.value = today;
+    }
+
     const inp = document.getElementById('applicationIdInput');
     if (inp) {
       inp.addEventListener('keydown', e => {

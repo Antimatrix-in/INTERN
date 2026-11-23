@@ -1,0 +1,608 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Document Management & Digital Certificates — Anti-Matrix Admin{% endblock %}
+
+{% block content %}
+<div class="workspace-admin-documents" style="display: flex; flex-direction: column; gap: 2rem;">
+
+  <!-- Header & Actions -->
+  <header style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.5rem; letter-spacing: -0.02em;">
+        Document Management & Digital Certificates
+      </h1>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0; max-width: 720px; line-height: 1.5;">
+        Generate official corporate letters, issue cryptographic completion certificates with QR verification, validate uploaded credentials, and manage revocation history.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <button type="button" onclick="openModal('issueDocModal')" class="btn btn-secondary" style="font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Issue Corporate Document
+      </button>
+      <button type="button" onclick="openModal('issueCertModal')" class="btn btn-primary" style="font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        Issue Completion Certificate
+      </button>
+    </div>
+  </header>
+
+  <!-- KPI Row -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+    <!-- Card 1 -->
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+      <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.04em;">Issued Documents</div>
+      <div style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary); margin: 0.35rem 0;" class="mono">{{ kpi.total_issued_docs }}</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted);">Letters & agreements generated</div>
+    </div>
+    <!-- Card 2 -->
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+      <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #10B981; letter-spacing: 0.04em;">Total Certificates</div>
+      <div style="font-size: 1.85rem; font-weight: 800; color: #10B981; margin: 0.35rem 0;" class="mono">{{ kpi.total_certificates }}</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted);">Verified digital completion credentials</div>
+    </div>
+    <!-- Card 3 -->
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+      <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #60A5FA; letter-spacing: 0.04em;">Active Verifications</div>
+      <div style="font-size: 1.85rem; font-weight: 800; color: #60A5FA; margin: 0.35rem 0;" class="mono">{{ kpi.active_verifications }}</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted);">Live on public verification registry</div>
+    </div>
+    <!-- Card 4 -->
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+      <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #EF4444; letter-spacing: 0.04em;">Revoked Certificates</div>
+      <div style="font-size: 1.85rem; font-weight: 800; color: #EF4444; margin: 0.35rem 0;" class="mono">{{ kpi.revoked_certificates }}</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted);">Superseded or cancelled credentials</div>
+    </div>
+    <!-- Card 5 -->
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+      <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #F59E0B; letter-spacing: 0.04em;">Pending Reviews</div>
+      <div style="font-size: 1.85rem; font-weight: 800; color: #F59E0B; margin: 0.35rem 0;" class="mono">{{ kpi.pending_uploaded_reviews }}</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted);">Uploaded intern documents awaiting review</div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Controls -->
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('admin.documents_workspace') }}" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+      <div style="flex: 2; min-width: 240px;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+          Search Intern or Document ID
+        </label>
+        <input type="text" name="q" value="{{ search_q }}" placeholder="Search by student name, ID (AM-INT-...) or Doc No (AM-CERT-...)" class="form-control" style="width: 100%; padding: 0.55rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+      </div>
+
+      <div style="flex: 1; min-width: 170px;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+          Document Type
+        </label>
+        <select name="doc_type" class="form-control" style="width: 100%; padding: 0.55rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+          <option value="ALL" {% if doc_type_filter == 'ALL' %}selected{% endif %}>All Types</option>
+          <option value="CERTIFICATE" {% if doc_type_filter == 'CERTIFICATE' %}selected{% endif %}>Completion Certificate</option>
+          <option value="OFFER_LETTER" {% if doc_type_filter == 'OFFER_LETTER' %}selected{% endif %}>Offer Letter</option>
+          <option value="JOINING_LETTER" {% if doc_type_filter == 'JOINING_LETTER' %}selected{% endif %}>Joining Letter</option>
+          <option value="EXPERIENCE_LETTER" {% if doc_type_filter == 'EXPERIENCE_LETTER' %}selected{% endif %}>Experience Letter</option>
+          <option value="INTERNSHIP_AGREEMENT" {% if doc_type_filter == 'INTERNSHIP_AGREEMENT' %}selected{% endif %}>Internship Agreement</option>
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+          Status
+        </label>
+        <select name="status" class="form-control" style="width: 100%; padding: 0.55rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+          <option value="ALL" {% if status_filter == 'ALL' %}selected{% endif %}>All Statuses</option>
+          <option value="ISSUED" {% if status_filter == 'ISSUED' %}selected{% endif %}>Issued / Active</option>
+          <option value="REVOKED" {% if status_filter == 'REVOKED' %}selected{% endif %}>Revoked</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn-primary" style="padding: 0.55rem 1.15rem; font-size: 0.85rem;">
+          Apply Filters
+        </button>
+        {% if search_q or doc_type_filter != 'ALL' or status_filter != 'ALL' %}
+          <a href="{{ url_for('admin.documents_workspace') }}" class="btn btn-secondary" style="padding: 0.55rem 0.85rem; font-size: 0.85rem;">
+            Reset
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Workspace Tabs -->
+  <div style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+    <button type="button" id="tabBtnIssued" onclick="switchTab('issued')" class="btn" style="background: rgba(16,185,129,0.12); color: #10B981; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1.25rem; border-radius: 8px; border: 1px solid rgba(16,185,129,0.25);">
+      Official Issued Documents ({{ issued_docs|length }})
+    </button>
+    <button type="button" id="tabBtnUploaded" onclick="switchTab('uploaded')" class="btn" style="background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; padding: 0.5rem 1.25rem; border-radius: 8px; border: 1px solid transparent;">
+      Uploaded Verification Documents ({{ uploaded_docs|length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: ISSUED CORPORATE DOCUMENTS -->
+  <div id="tabContentIssued">
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden;">
+      {% if issued_docs %}
+        <div class="table-responsive">
+          <table class="table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.04em;">
+                <th style="padding: 1rem 1.25rem;">Document Ref</th>
+                <th style="padding: 1rem 1.25rem;">Intern Name & UID</th>
+                <th style="padding: 1rem 1.25rem;">Document Type</th>
+                <th style="padding: 1rem 1.25rem;">Status</th>
+                <th style="padding: 1rem 1.25rem;">Issued Date</th>
+                <th style="padding: 1rem 1.25rem; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in issued_docs %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem;">
+                  <td style="padding: 1rem 1.25rem;">
+                    <span style="font-weight: 700; color: var(--text-primary);" class="mono">{{ d.document_no }}</span>
+                    {% if d.doc_type == 'CERTIFICATE' %}
+                      <span style="font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 4px; background: rgba(16,185,129,0.15); color: #34D399; margin-left: 0.35rem; font-weight: 700;">QR VERIFIED</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding: 1rem 1.25rem;">
+                    <a href="{{ url_for('admin.student_detail', student_id=d.student_id) }}" style="font-weight: 700; color: #60A5FA; text-decoration: none;">
+                      {{ d.student.full_name if d.student else 'Unknown Intern' }}
+                    </a>
+                    <div style="font-size: 0.72rem; color: var(--text-muted);" class="mono">
+                      {{ d.student.student_uid if d.student else '' }}
+                    </div>
+                  </td>
+                  <td style="padding: 1rem 1.25rem;">
+                    <span style="font-weight: 600; color: var(--text-primary);">{{ d.display_type }}</span>
+                  </td>
+                  <td style="padding: 1rem 1.25rem;">
+                    {% if d.status == 'REVOKED' %}
+                      <span class="status-badge" style="background: rgba(239,68,68,0.15); color: #EF4444; font-weight: 700; font-size: 0.72rem;">REVOKED</span>
+                      {% if d.revocation_reason %}
+                        <div style="font-size: 0.7rem; color: var(--text-muted); max-width: 180px; margin-top: 0.2rem;" title="{{ d.revocation_reason }}">
+                          {{ d.revocation_reason[:35] }}{% if d.revocation_reason|length > 35 %}...{% endif %}
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      <span class="status-badge" style="background: rgba(16,185,129,0.15); color: #34D399; font-weight: 700; font-size: 0.72rem;">ISSUED</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding: 1rem 1.25rem; color: var(--text-muted);">
+                    {{ d.issued_at.strftime('%d %b %Y, %H:%M') if d.issued_at else 'Recent' }}
+                  </td>
+                  <td style="padding: 1rem 1.25rem; text-align: right;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                      <a href="{{ url_for('admin.download_issued_document', doc_no=d.document_no) }}" class="btn btn-secondary btn-sm" title="Download PDF">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </a>
+                      <a href="{{ url_for('admin.preview_issued_document', doc_no=d.document_no) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Preview inline">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </a>
+                      {% if d.doc_type == 'CERTIFICATE' %}
+                        <a href="{{ url_for('main.verify_certificate', certificate_id=d.document_no) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Public Verification Link">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </a>
+                        {% if d.status != 'REVOKED' %}
+                          <button type="button" onclick="openRevokeModal('{{ d.document_no }}')" class="btn btn-sm" style="background: rgba(239,68,68,0.12); color: #EF4444; border: 1px solid rgba(239,68,68,0.25);" title="Revoke Certificate">
+                            Revoke
+                          </button>
+                        {% else %}
+                          <button type="button" onclick="openReissueModal('{{ d.document_no }}')" class="btn btn-sm" style="background: rgba(59,130,246,0.12); color: #60A5FA; border: 1px solid rgba(59,130,246,0.25);" title="Reissue Fresh Certificate">
+                            Reissue
+                          </button>
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          No corporate documents or certificates found matching the search criteria.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- TAB 2: UPLOADED VERIFICATION DOCUMENTS -->
+  <div id="tabContentUploaded" style="display: none;">
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden;">
+      {% if uploaded_docs %}
+        <div class="table-responsive">
+          <table class="table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.04em;">
+                <th style="padding: 1rem 1.25rem;">Intern Details</th>
+                <th style="padding: 1rem 1.25rem;">File Name & Type</th>
+                <th style="padding: 1rem 1.25rem;">Size</th>
+                <th style="padding: 1rem 1.25rem;">Verification Status</th>
+                <th style="padding: 1rem 1.25rem;">Uploaded Timestamp</th>
+                <th style="padding: 1rem 1.25rem; text-align: right;">Review & Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in uploaded_docs %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem;">
+                  <td style="padding: 1rem 1.25rem;">
+                    <a href="{{ url_for('admin.student_detail', student_id=doc.student_id) }}" style="font-weight: 700; color: #60A5FA; text-decoration: none;">
+                      {{ doc.student.full_name if doc.student else 'Intern' }}
+                    </a>
+                    <div style="font-size: 0.72rem; color: var(--text-muted);" class="mono">
+                      {{ doc.student.student_uid if doc.student else '' }}
+                    </div>
+                  </td>
+                  <td style="padding: 1rem 1.25rem;">
+                    <div style="font-weight: 600; color: var(--text-primary);">{{ doc.file_name }}</div>
+                    <span style="font-size: 0.72rem; color: #60A5FA; font-weight: 700;">{{ doc.doc_type }}</span>
+                    {% if doc.rejection_reason %}
+                      <div style="font-size: 0.7rem; color: #EF4444; margin-top: 0.2rem;">
+                        Reason: {{ doc.rejection_reason }}
+                      </div>
+                    {% endif %}
+                  </td>
+                  <td style="padding: 1rem 1.25rem; color: var(--text-muted);" class="mono">
+                    {{ (doc.file_size / 1024) | round(1) }} KB
+                  </td>
+                  <td style="padding: 1rem 1.25rem;">
+                    {% if doc.status == 'APPROVED' %}
+                      <span class="status-badge" style="background: rgba(16,185,129,0.15); color: #34D399; font-weight: 700; font-size: 0.72rem;">✓ APPROVED</span>
+                    {% elif doc.status == 'REJECTED' %}
+                      <span class="status-badge" style="background: rgba(239,68,68,0.15); color: #EF4444; font-weight: 700; font-size: 0.72rem;">✕ REJECTED</span>
+                    {% elif doc.status == 'RE_UPLOAD_REQUIRED' %}
+                      <span class="status-badge" style="background: rgba(245,158,11,0.15); color: #F59E0B; font-weight: 700; font-size: 0.72rem;">RE-UPLOAD NEEDED</span>
+                    {% else %}
+                      <span class="status-badge" style="background: rgba(59,130,246,0.12); color: #60A5FA; font-weight: 700; font-size: 0.72rem;">AWAITING REVIEW</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding: 1rem 1.25rem; color: var(--text-muted);">
+                    {{ doc.uploaded_at.strftime('%d %b %Y, %H:%M') if doc.uploaded_at else 'Recent' }}
+                  </td>
+                  <td style="padding: 1rem 1.25rem; text-align: right;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                      <a href="{{ url_for('admin.download_admin_uploaded_document', doc_id=doc.id) }}" class="btn btn-secondary btn-sm" title="Download Document">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </a>
+                      <a href="{{ url_for('admin.preview_admin_uploaded_document', doc_id=doc.id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Preview inline">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </a>
+                      <button type="button" onclick="openReviewModal('{{ doc.id }}', '{{ doc.file_name }}', '{{ doc.status }}')" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 0.3rem 0.65rem;">
+                        Review
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          No student uploaded verification documents found.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── MODAL 1: ISSUE CORPORATE DOCUMENT ────────────────────────────────────── -->
+  <div id="issueDocModal" class="doc-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1050; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; width: 100%; max-width: 520px; padding: 1.75rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0;">Issue Corporate Document</h3>
+        <button type="button" onclick="closeModal('issueDocModal')" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin.issue_document') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div>
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+            Target Intern & Program
+          </label>
+          <select name="internship_id" required class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="">Select an intern...</option>
+            {% for intern in internships %}
+              <option value="{{ intern.id }}">
+                {{ intern.student.full_name }} ({{ intern.student.student_uid }}) — Status: {{ intern.status }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+            Document Type
+          </label>
+          <select name="doc_type" required class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="OFFER_LETTER">Official Offer Letter</option>
+            <option value="JOINING_LETTER">Official Joining / Induction Letter</option>
+            <option value="EXPERIENCE_LETTER">Official Experience Certificate</option>
+            <option value="INTERNSHIP_AGREEMENT">Internship Terms Agreement</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+            Internal Notes (Optional)
+          </label>
+          <textarea name="notes" rows="2" placeholder="Audit notes regarding this issuance..." class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+          <button type="button" onclick="closeModal('issueDocModal')" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="font-weight: 700;">Generate & Issue Document</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── MODAL 2: ISSUE COMPLETION CERTIFICATE ────────────────────────────────── -->
+  <div id="issueCertModal" class="doc-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1050; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; width: 100%; max-width: 560px; padding: 1.75rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: #10B981; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+          Issue Completion Certificate
+        </h3>
+        <button type="button" onclick="closeModal('issueCertModal')" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin.issue_certificate') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div>
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+            Select Eligible Intern
+          </label>
+          <select id="certInternshipSelect" name="internship_id" required onchange="checkEligibility(this.value)" class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="">Select an intern...</option>
+            {% for intern in internships %}
+              <option value="{{ intern.id }}">
+                {{ intern.student.full_name }} ({{ intern.student.student_uid }}) — Status: {{ intern.status }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Dynamic Eligibility Display -->
+        <div id="eligibilityResultBox" style="display: none; padding: 0.85rem 1rem; border-radius: 10px; font-size: 0.82rem; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02);">
+          <div style="font-weight: 700; margin-bottom: 0.25rem;" id="eligibilityTitle">Eligibility Check</div>
+          <div id="eligibilityMessage" style="color: var(--text-muted);"></div>
+        </div>
+
+        <div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 0.85rem 1rem;">
+          <label style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer;">
+            <input type="checkbox" name="override_eligibility" id="overrideCheck" value="1" style="margin-top: 0.2rem;" onchange="toggleOverrideReason(this.checked)">
+            <div>
+              <div style="font-weight: 700; color: #F59E0B; font-size: 0.82rem;">Authorized Administrative Override</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">
+                Check this box only if issuing certificate by authorized administrative discretion prior to full automated milestone verification.
+              </div>
+            </div>
+          </label>
+          <div id="overrideReasonDiv" style="display: none; margin-top: 0.65rem;">
+            <input type="text" name="override_reason" placeholder="State reason for administrative override..." class="form-control" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid rgba(245,158,11,0.4); background: rgba(0,0,0,0.2); color: var(--text-primary); font-size: 0.8rem;">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+          <button type="button" onclick="closeModal('issueCertModal')" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="font-weight: 700;">Issue Cryptographic Certificate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── MODAL 3: REVOKE CERTIFICATE ─────────────────────────────────────────── -->
+  <div id="revokeCertModal" class="doc-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1050; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; width: 100%; max-width: 480px; padding: 1.75rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: #EF4444; margin: 0;">Revoke Certificate</h3>
+        <button type="button" onclick="closeModal('revokeCertModal')" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+      </div>
+
+      <form id="revokeCertForm" method="POST" action="" style="display: flex; flex-direction: column; gap: 1rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+          You are about to revoke certificate <strong id="revokeCertNoLabel" style="color: var(--text-primary);" class="mono"></strong>. This credential will immediately show as <strong>REVOKED</strong> on the public verification portal.
+        </p>
+
+        <div>
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+            Revocation Reason (Mandatory)
+          </label>
+          <textarea name="reason" required rows="3" placeholder="Explain the reason for revocation (e.g. academic integrity violation, superseded credential)..." class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+          <button type="button" onclick="closeModal('revokeCertModal')" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn" style="background: #EF4444; color: white; font-weight: 700; border: none; border-radius: 8px; padding: 0.55rem 1.15rem;">Confirm Revocation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── MODAL 4: REISSUE CERTIFICATE ────────────────────────────────────────── -->
+  <div id="reissueCertModal" class="doc-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1050; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; width: 100%; max-width: 480px; padding: 1.75rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: #60A5FA; margin: 0;">Reissue Certificate</h3>
+        <button type="button" onclick="closeModal('reissueCertModal')" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+      </div>
+
+      <form id="reissueCertForm" method="POST" action="" style="display: flex; flex-direction: column; gap: 1rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+          Reissuing certificate <strong id="reissueCertNoLabel" style="color: var(--text-primary);" class="mono"></strong>. A new unique Certificate Identification Number and QR code will be generated.
+        </p>
+
+        <div>
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+            Reason for Reissuance
+          </label>
+          <input type="text" name="reason" value="Name correction / Credential update" required class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+          <button type="button" onclick="closeModal('reissueCertModal')" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="font-weight: 700;">Reissue Fresh Certificate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── MODAL 5: REVIEW UPLOADED DOCUMENT ───────────────────────────────────── -->
+  <div id="reviewDocModal" class="doc-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1050; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; width: 100%; max-width: 480px; padding: 1.75rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0;">Review Uploaded Document</h3>
+        <button type="button" onclick="closeModal('reviewDocModal')" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+      </div>
+
+      <form id="reviewDocForm" method="POST" action="" style="display: flex; flex-direction: column; gap: 1rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+          Reviewing: <strong id="reviewDocNameLabel" style="color: var(--text-primary);"></strong>
+        </p>
+
+        <div>
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+            Verification Decision
+          </label>
+          <select name="status" id="reviewStatusSelect" required onchange="toggleRejectionReason(this.value)" class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="APPROVED">✓ Approve Document</option>
+            <option value="REJECTED">✕ Reject Document</option>
+            <option value="RE_UPLOAD_REQUIRED">⚠️ Request Re-upload</option>
+            <option value="UNDER_REVIEW">⏳ Keep Under Review</option>
+          </select>
+        </div>
+
+        <div id="rejectionReasonDiv" style="display: none;">
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase;">
+            Reason for Rejection / Re-upload
+          </label>
+          <textarea name="rejection_reason" rows="2" placeholder="Specify why the document was rejected or what needs correction..." class="form-control" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 0.85rem;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+          <button type="button" onclick="closeModal('reviewDocModal')" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="font-weight: 700;">Submit Review</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function switchTab(tab) {
+    var issuedContent = document.getElementById('tabContentIssued');
+    var uploadedContent = document.getElementById('tabContentUploaded');
+    var issuedBtn = document.getElementById('tabBtnIssued');
+    var uploadedBtn = document.getElementById('tabBtnUploaded');
+
+    if (tab === 'issued') {
+      issuedContent.style.display = 'block';
+      uploadedContent.style.display = 'none';
+      issuedBtn.style.background = 'rgba(16,185,129,0.12)';
+      issuedBtn.style.color = '#10B981';
+      issuedBtn.style.borderColor = 'rgba(16,185,129,0.25)';
+      uploadedBtn.style.background = 'transparent';
+      uploadedBtn.style.color = 'var(--text-muted)';
+      uploadedBtn.style.borderColor = 'transparent';
+    } else {
+      issuedContent.style.display = 'none';
+      uploadedContent.style.display = 'block';
+      uploadedBtn.style.background = 'rgba(16,185,129,0.12)';
+      uploadedBtn.style.color = '#10B981';
+      uploadedBtn.style.borderColor = 'rgba(16,185,129,0.25)';
+      issuedBtn.style.background = 'transparent';
+      issuedBtn.style.color = 'var(--text-muted)';
+      issuedBtn.style.borderColor = 'transparent';
+    }
+  }
+
+  function openModal(id) {
+    var m = document.getElementById(id);
+    if (m) m.style.display = 'flex';
+  }
+
+  function closeModal(id) {
+    var m = document.getElementById(id);
+    if (m) m.style.display = 'none';
+  }
+
+  function openRevokeModal(certNo) {
+    document.getElementById('revokeCertNoLabel').innerText = certNo;
+    document.getElementById('revokeCertForm').action = "/admin/certificates/" + encodeURIComponent(certNo) + "/revoke";
+    openModal('revokeCertModal');
+  }
+
+  function openReissueModal(certNo) {
+    document.getElementById('reissueCertNoLabel').innerText = certNo;
+    document.getElementById('reissueCertForm').action = "/admin/certificates/" + encodeURIComponent(certNo) + "/reissue";
+    openModal('reissueCertModal');
+  }
+
+  function openReviewModal(docId, docName, currentStatus) {
+    document.getElementById('reviewDocNameLabel').innerText = docName;
+    document.getElementById('reviewDocForm').action = "/admin/documents/" + docId + "/review";
+    var sel = document.getElementById('reviewStatusSelect');
+    if (currentStatus) sel.value = currentStatus;
+    toggleRejectionReason(sel.value);
+    openModal('reviewDocModal');
+  }
+
+  function toggleRejectionReason(val) {
+    var div = document.getElementById('rejectionReasonDiv');
+    if (val === 'REJECTED' || val === 'RE_UPLOAD_REQUIRED') {
+      div.style.display = 'block';
+    } else {
+      div.style.display = 'none';
+    }
+  }
+
+  function toggleOverrideReason(checked) {
+    var div = document.getElementById('overrideReasonDiv');
+    div.style.display = checked ? 'block' : 'none';
+  }
+
+  function checkEligibility(internshipId) {
+    var box = document.getElementById('eligibilityResultBox');
+    var title = document.getElementById('eligibilityTitle');
+    var msg = document.getElementById('eligibilityMessage');
+
+    if (!internshipId) {
+      box.style.display = 'none';
+      return;
+    }
+
+    fetch('/admin/internships/' + internshipId + '/certificate-eligibility')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        box.style.display = 'block';
+        if (data.is_eligible) {
+          box.style.borderColor = 'rgba(16,185,129,0.3)';
+          box.style.background = 'rgba(16,185,129,0.08)';
+          title.innerHTML = '<span style="color:#10B981;">✓ Eligible for Certificate</span> (' + data.completion_percentage + '% Complete)';
+          msg.innerText = data.reason;
+        } else {
+          box.style.borderColor = 'rgba(239,68,68,0.3)';
+          box.style.background = 'rgba(239,68,68,0.08)';
+          title.innerHTML = '<span style="color:#EF4444;">⚠️ Ineligible (' + data.completion_percentage + '% Complete)</span>';
+          msg.innerText = data.reason + " (Requires administrative override to issue).";
+        }
+      })
+      .catch(function(err) {
+        console.error("Eligibility check error:", err);
+      });
+  }
+</script>
+{% endblock %}

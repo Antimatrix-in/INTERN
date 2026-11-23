@@ -1,0 +1,342 @@
+{% extends "mentor/base_mentor.html" %}
+
+{% block title %}Mentor Command Center | Anti-Matrix Enterprise{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Executive Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 pb-3 border-bottom" style="border-color: var(--border-light) !important;">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald); font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.25);">
+          MENTOR COMMAND CENTER
+        </span>
+        <span class="text-xs text-muted font-mono">{{ mentor.employee_id or 'AM-MTR-001' }}</span>
+        {% if mentor.availability_status == 'AVAILABLE' %}
+        <span class="badge bg-success-subtle text-success border border-success-subtle text-xs">AVAILABLE</span>
+        {% elif mentor.availability_status == 'BUSY' %}
+        <span class="badge bg-warning-subtle text-warning border border-warning-subtle text-xs">BUSY</span>
+        {% else %}
+        <span class="badge bg-secondary-subtle text-secondary border text-xs">ON LEAVE</span>
+        {% endif %}
+      </div>
+      <h1 class="h3 font-weight-bold text-dark mb-1" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">Welcome back, {{ mentor.full_name }}</h1>
+      <p class="text-sm text-muted mb-0">{{ mentor.designation or 'Technical Mentor' }} • {{ mentor.department or 'Engineering' }} • Anti-Matrix Supervised Curriculum</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('mentor.submissions') }}" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-2 shadow-sm" style="background: var(--brand-emerald); border-color: var(--brand-emerald); font-weight: 600;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        Review Queue ({{ pending_count }})
+      </a>
+      <a href="{{ url_for('mentor.interns') }}" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-2 shadow-sm" style="background: #fff;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+        My Mentees
+      </a>
+    </div>
+  </div>
+
+  <!-- 6 KPI Telemetry Cards -->
+  <div class="row g-3">
+    <!-- Active Mentees -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs" style="border-color: rgba(16, 185, 129, 0.3) !important; background: rgba(16, 185, 129, 0.03);">
+        <div class="text-xs font-weight-bold text-success text-uppercase mb-1" style="letter-spacing: 0.05em; color: var(--brand-emerald) !important;">ACTIVE MENTEES</div>
+        <div class="h4 font-weight-black text-success mb-0" style="font-weight: 800; color: var(--brand-emerald) !important;">{{ active_intern_count }}</div>
+        <div class="text-xs text-muted mt-1">In progress track</div>
+      </div>
+    </div>
+
+    <!-- Pending Reviews -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs" style="border-color: {% if pending_count > 0 %}rgba(245, 158, 11, 0.4){% else %}var(--border-light){% endif %} !important; {% if pending_count > 0 %}background: rgba(245, 158, 11, 0.04);{% endif %}">
+        <div class="text-xs font-weight-bold text-uppercase mb-1" style="letter-spacing: 0.05em; color: {% if pending_count > 0 %}#D97706{% else %}#64748B{% endif %};">PENDING REVIEWS</div>
+        <div class="h4 font-weight-black mb-0" style="font-weight: 800; color: {% if pending_count > 0 %}#D97706{% else %}#0F172A{% endif %};">{{ pending_count }}</div>
+        <div class="text-xs text-muted mt-1">Awaiting evaluation</div>
+      </div>
+    </div>
+
+    <!-- Supervised Projects -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs" style="border-color: var(--border-light) !important;">
+        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1" style="letter-spacing: 0.05em;">PROJECT TRACKS</div>
+        <div class="h4 font-weight-black text-dark mb-0" style="font-weight: 800;">{{ active_projects_count }}</div>
+        <div class="text-xs text-muted mt-1">Distinct curricula</div>
+      </div>
+    </div>
+
+    <!-- Upcoming Deadlines -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs" style="border-color: var(--border-light) !important;">
+        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1" style="letter-spacing: 0.05em;">DEADLINES (7D)</div>
+        <div class="h4 font-weight-black text-dark mb-0" style="font-weight: 800;">{{ upcoming_deadlines|length }}</div>
+        <div class="text-xs text-muted mt-1">Milestones due soon</div>
+      </div>
+    </div>
+
+    <!-- Completion Rate -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs" style="border-color: var(--border-light) !important;">
+        <div class="text-xs font-weight-bold text-uppercase mb-1" style="letter-spacing: 0.05em; color: #8B5CF6;">COMPLETION RATE</div>
+        <div class="h4 font-weight-black text-dark mb-0" style="font-weight: 800;">{{ completion_rate }}%</div>
+        <div class="text-xs text-muted mt-1">{{ completed_internships|length }} / {{ total_assigned_count }} graduated</div>
+      </div>
+    </div>
+
+    <!-- Capacity Utilization -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs" style="border-color: var(--border-light) !important;">
+        <div class="text-xs font-weight-bold text-muted text-uppercase mb-1" style="letter-spacing: 0.05em;">CAPACITY LOAD</div>
+        <div class="h4 font-weight-black text-dark mb-0" style="font-weight: 800;">{{ active_intern_count }}/{{ max_cap }}</div>
+        <div class="text-xs text-muted mt-1">{{ capacity_percent }}% utilized</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid: Mentees Progress & Workload Summary -->
+  <div class="row g-4">
+    <!-- Left Column: Active Mentees Progress Table (8 cols) -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white mb-4" style="border: 1px solid var(--border-light) !important;">
+        <div class="card-header bg-light py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--border-light) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-2 p-1.5 d-flex align-items-center justify-center text-white" style="background: var(--brand-emerald);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            </div>
+            <div>
+              <h5 class="h6 font-weight-bold text-dark mb-0">Active Mentees & Milestone Progress</h5>
+              <div class="text-xs text-muted">Weekly curriculum progression, submission statuses & action items</div>
+            </div>
+          </div>
+          <a href="{{ url_for('mentor.interns') }}" class="btn btn-xs btn-outline-secondary">View All</a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" style="font-size: 0.8125rem;">
+            <thead class="bg-light text-muted text-uppercase" style="font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em;">
+              <tr>
+                <th class="py-3 px-3">Intern</th>
+                <th class="py-3 px-3">Project Track</th>
+                <th class="py-3 px-3">Current Milestone</th>
+                <th class="py-3 px-3">Progress</th>
+                <th class="py-3 px-3 text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              {% for i in active_internships %}
+              {% set student = i.student %}
+              {% set user = student.user %}
+              {% set assign = i.active_assignment %}
+              <tr>
+                <td class="py-3 px-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center font-weight-bold text-white shadow-xs" style="width: 32px; height: 32px; background: #0F172A; font-size: 0.75rem;">
+                      {{ (user.full_name if user else 'ST')[:2]|upper }}
+                    </div>
+                    <div>
+                      <a href="{{ url_for('mentor.intern_detail', student_id=student.id) }}" class="text-dark font-weight-bold text-decoration-none hover-emerald">
+                        {{ user.full_name if user else 'Student' }}
+                      </a>
+                      <div class="text-muted font-mono text-xs">{{ student.student_uid or user.employee_id }}</div>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="py-3 px-3">
+                  {% if assign and assign.project %}
+                  <div class="font-weight-semibold text-dark text-truncate" style="max-width: 180px;">{{ assign.project.title }}</div>
+                  <div class="text-muted text-xs">{{ assign.project.domain }}</div>
+                  {% else %}
+                  <span class="text-muted font-italic">Unassigned project</span>
+                  {% endif %}
+                </td>
+
+                <td class="py-3 px-3">
+                  <span class="badge bg-light text-dark border text-xs">{{ i.current_stage }}</span>
+                </td>
+
+                <td class="py-3 px-3" style="min-width: 120px;">
+                  <div class="d-flex justify-content-between text-xs mb-1">
+                    <span class="font-weight-bold text-success">{{ i.progress_percent }}%</span>
+                  </div>
+                  <div class="progress" style="height: 5px; border-radius: 999px;">
+                    <div class="progress-bar bg-success" style="width: {{ i.progress_percent }}%; border-radius: 999px;"></div>
+                  </div>
+                </td>
+
+                <td class="py-3 px-3 text-end">
+                  <a href="{{ url_for('mentor.intern_detail', student_id=student.id) }}" class="btn btn-xs btn-outline-secondary py-1 px-2">
+                    Supervise
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="py-4 text-center text-muted">
+                  No active mentees currently assigned. Contact administration to allocate interns to your profile.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pending Submissions Review Queue Widget -->
+      <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white" style="border: 1px solid var(--border-light) !important;">
+        <div class="card-header bg-light py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--border-light) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-2 p-1.5 d-flex align-items-center justify-center text-white" style="background: #D97706;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            </div>
+            <div>
+              <h5 class="h6 font-weight-bold text-dark mb-0">Pending Submission Queue ({{ pending_submissions|length }})</h5>
+              <div class="text-xs text-muted">Deliverables waiting for code review, demonstration checks, and evaluation</div>
+            </div>
+          </div>
+          <a href="{{ url_for('mentor.submissions') }}" class="btn btn-xs btn-outline-secondary">Open Full Queue</a>
+        </div>
+
+        <div class="p-3">
+          {% if pending_submissions %}
+          <div class="divide-y">
+            {% for s in pending_submissions %}
+            {% set student = s.student %}
+            {% set user = student.user %}
+            {% set milestone = s.milestone %}
+            <div class="py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+              <div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="font-weight-bold text-dark">{{ user.full_name if user else 'Student' }}</span>
+                  <span class="badge bg-light text-muted border font-mono text-xs">{{ student.student_uid }}</span>
+                  <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #D97706;">Week {{ milestone.week_number }}</span>
+                </div>
+                <div class="text-xs text-muted mt-0.5">{{ milestone.title }}</div>
+                <div class="d-flex align-items-center gap-3 text-xs mt-1">
+                  {% if s.effective_repo_url %}
+                  <a href="{{ s.effective_repo_url }}" target="_blank" class="text-primary text-decoration-none">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                    GitHub Repo
+                  </a>
+                  {% endif %}
+                  {% if s.effective_video_path %}
+                  <a href="{{ s.effective_video_path }}" target="_blank" class="text-success text-decoration-none">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                    Demo Video
+                  </a>
+                  {% endif %}
+                  <span class="text-muted">Submitted {{ s.submitted_at.strftime('%d %b %H:%M') if s.submitted_at else 'Recently' }}</span>
+                </div>
+              </div>
+
+              <a href="{{ url_for('mentor.review_submission', submission_id=s.id) }}" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5 shadow-xs" style="background: var(--brand-emerald); border-color: var(--brand-emerald); font-weight: 600;">
+                Evaluate Submission
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="py-4 text-center text-muted">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-2 text-success"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <div class="font-weight-semibold">Review Queue is Clear!</div>
+            <div class="text-xs mt-1">All submissions from your assigned mentees have been evaluated.</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Capacity Status, Deadlines & Evaluations (4 cols) -->
+    <div class="col-lg-4 space-y-4">
+      <!-- Capacity Card -->
+      <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white p-4" style="border: 1px solid var(--border-light) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-xs font-weight-bold text-muted text-uppercase" style="letter-spacing: 0.05em;">MENTOR CAPACITY</span>
+          <span class="badge {% if capacity_percent >= 100 %}bg-danger{% elif capacity_percent >= 75 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+            {{ active_intern_count }} / {{ max_cap }} Mentees
+          </span>
+        </div>
+        <div class="progress my-2" style="height: 8px; border-radius: 999px;">
+          <div class="progress-bar {% if capacity_percent >= 100 %}bg-danger{% elif capacity_percent >= 75 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ capacity_percent }}%; border-radius: 999px;"></div>
+        </div>
+        <p class="text-xs text-muted mt-2 mb-0">
+          {{ max_cap - active_intern_count }} slots available. Update your capacity or availability status from the profile tab.
+        </p>
+      </div>
+
+      <!-- Upcoming Deadlines Card -->
+      <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white" style="border: 1px solid var(--border-light) !important;">
+        <div class="card-header bg-light py-2.5 px-3 border-bottom d-flex align-items-center justify-content-between">
+          <span class="text-xs font-weight-bold text-dark text-uppercase">Upcoming Milestones (7 Days)</span>
+          <span class="badge bg-secondary-subtle text-secondary">{{ upcoming_deadlines|length }}</span>
+        </div>
+        <div class="p-3">
+          {% if upcoming_deadlines %}
+          <div class="divide-y">
+            {% for d in upcoming_deadlines %}
+            <div class="py-2.5">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="font-weight-bold text-dark text-xs">{{ d.student.user.full_name }}</span>
+                {% if d.is_overdue %}
+                <span class="badge bg-danger-subtle text-danger text-xs">OVERDUE</span>
+                {% else %}
+                <span class="badge bg-warning-subtle text-warning text-xs">Due {{ d.due_at.strftime('%d %b') if d.due_at else 'Soon' }}</span>
+                {% endif %}
+              </div>
+              <div class="text-xs text-muted mt-0.5">Week {{ d.milestone.week_number }}: {{ d.milestone.title }}</div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-3 text-muted text-xs">
+            No imminent deadlines in the next 7 days.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Recent Evaluations Recorded -->
+      <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white" style="border: 1px solid var(--border-light) !important;">
+        <div class="card-header bg-light py-2.5 px-3 border-bottom d-flex align-items-center justify-content-between">
+          <span class="text-xs font-weight-bold text-dark text-uppercase">Recent Evaluations ({{ recent_evaluations|length }})</span>
+          <a href="{{ url_for('mentor.analytics') }}" class="text-xs text-muted text-decoration-none">View All</a>
+        </div>
+        <div class="p-3">
+          {% if recent_evaluations %}
+          <div class="divide-y">
+            {% for ev in recent_evaluations %}
+            <div class="py-2.5 d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold text-dark">
+                  {% if ev.result == 'PASSED' %}
+                  <span class="text-success">[APPROVED]</span>
+                  {% else %}
+                  <span class="text-warning">[REVISION]</span>
+                  {% endif %}
+                  {{ ev.milestone.title if ev.milestone else 'Milestone Review' }}
+                </div>
+                <div class="text-muted text-xs">{{ ev.evaluated_at.strftime('%d %b %Y %H:%M') if ev.evaluated_at else 'Recent' }}</div>
+              </div>
+              {% if ev.total_score %}
+              <span class="badge font-mono {% if ev.total_score >= 85 %}bg-success{% elif ev.total_score >= 70 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                {{ ev.total_score }}/100
+              </span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-3 text-muted text-xs">
+            No recent evaluations conducted yet.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,83 +1,121 @@
 {% extends 'student/base_student.html' %}
 
 {% block title %}Weekly Roadmap Progress — ANTI MATRIX{% endblock %}
+{% block breadcrumb_title %}Weekly Progress{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 2rem;">
-  <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.35rem;">Weekly Roadmap Progress</h1>
-  <p style="color: var(--text-muted); font-size: 0.925rem;">
-    Track your progression through the {{ assignment.project.duration_weeks }}-week curriculum. Milestones require mentor approval to unlock the next phase.
-  </p>
-</div>
-
-<!-- Progress Overview Banner -->
-<div class="card" style="margin-bottom: 2rem;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+<div class="workspace-weekly-progress">
+  <!-- Page Header -->
+  <header class="page-top-header">
     <div>
-      <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Overall Project Completion</span>
-      <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--primary-light);">{{ assignment.progress_percent }}% Completed</h3>
+      <h1 class="page-main-title">Weekly Roadmap Progress</h1>
+      <p class="page-main-subtitle">
+        Track your progression through the {{ assignment.project.duration_weeks }}-week curriculum. Milestones require mentor approval to unlock the next phase.
+      </p>
     </div>
-    <div style="font-size: 0.85rem; color: var(--text-muted);">
-      {{ assignment.project.title }} ({{ assignment.project.project_code }})
-    </div>
-  </div>
-  <div class="progress-track" style="height: 10px;">
-    <div class="progress-fill" style="width: {{ assignment.progress_percent }}%;"></div>
-  </div>
-</div>
+  </header>
 
-<!-- Roadmap List -->
-<div style="display: flex; flex-direction: column; gap: 1.25rem;">
-  {% for m in milestones %}
-    <div class="card" style="margin-bottom: 0; {% if m.status in ['COMPLETED', 'APPROVED'] %}border-color: rgba(16, 185, 129, 0.3);{% elif m.status == 'AVAILABLE' %}border-color: var(--primary);{% else %}opacity: 0.75;{% endif %}">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-        <div style="display: flex; gap: 1.25rem; align-items: flex-start;">
-          <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--bg-surface-elevated); border: 1px solid var(--border-medium); display: flex; align-items: center; justify-content: center; font-weight: 800; font-family: var(--font-mono); color: {% if m.status in ['COMPLETED', 'APPROVED'] %}var(--primary-light){% elif m.status == 'AVAILABLE' %}var(--accent-cyan){% else %}var(--text-subtle){% endif %}; flex-shrink: 0;">
-            W{{ m.week_number }}
-          </div>
-
-          <div>
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
-              <h3 style="font-size: 1.15rem; font-weight: 700;">{{ m.title }}</h3>
-              {% if m.status in ['COMPLETED', 'APPROVED'] %}
-                <span class="status-badge badge-completed">Completed</span>
-              {% elif m.status in ['AVAILABLE', 'IN_PROGRESS'] %}
-                <span class="status-badge badge-available">Available</span>
-              {% elif m.status in ['SUBMITTED', 'UNDER_REVIEW'] %}
-                <span class="status-badge badge-submitted">Under Review</span>
-              {% elif m.status == 'REVISION_REQUIRED' %}
-                <span class="status-badge badge-revision">Revision Required</span>
-              {% else %}
-                <span class="status-badge badge-locked">Locked 🔒</span>
-              {% endif %}
-            </div>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem; line-height: 1.5;">
-              {{ m.objective }}
-            </p>
-
-            <div style="display: flex; gap: 1.5rem; font-size: 0.8rem; color: var(--text-subtle);">
-              <span>📋 {{ m.total_tasks_count }} Tasks</span>
-              <span>📦 {{ m.deliverables|length }} Deliverables</span>
-              {% if m.approved_at %}
-                <span style="color: var(--primary-light);">✓ Approved on {{ m.approved_at.strftime('%d %b %Y') if m.approved_at.strftime is defined else m.approved_at }}</span>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          {% if m.status != 'LOCKED' %}
-            <a href="{{ url_for('student.week_detail', milestone_id=m.id) }}" class="btn btn-outline-primary btn-sm">
-              Open Workspace →
-            </a>
-          {% else %}
-            <button class="btn btn-secondary btn-sm disabled" disabled>
-              Locked
-            </button>
-          {% endif %}
-        </div>
+  <!-- Progress Overview Banner Card -->
+  <section class="card progress-banner-card" aria-label="Curriculum Progression Summary">
+    <div class="progress-banner-inner">
+      <div>
+        <span class="progress-label">Overall Project Completion</span>
+        <h2 class="progress-headline-large">{{ assignment.progress_percent }}% Completed</h2>
+      </div>
+      <div class="progress-project-tag mono">
+        {{ assignment.project.title }} ({{ assignment.project.project_code }})
       </div>
     </div>
-  {% endfor %}
+    <div class="progress-track" aria-valuenow="{{ assignment.progress_percent }}" aria-valuemin="0" aria-valuemax="100" role="progressbar">
+      <div class="progress-fill" style="width: {{ assignment.progress_percent }}%;"></div>
+    </div>
+  </section>
+
+  <!-- Roadmap Milestone List -->
+  <section class="weekly-roadmap-container" aria-label="Milestones List">
+    <div class="milestones-stack">
+      {% for m in milestones %}
+        {% set disp_status = m.display_status %}
+        {% set is_completed = (disp_status == 'COMPLETED' or m.status in ['COMPLETED', 'APPROVED']) %}
+        {% set is_locked = (disp_status == 'LOCKED' or m.status == 'LOCKED') %}
+        {% set is_under_review = (disp_status == 'UNDER_REVIEW' or m.status in ['SUBMITTED', 'UNDER_REVIEW']) %}
+        {% set is_redo = (disp_status == 'REDO_REQUIRED' or m.status in ['REVISION_REQUIRED', 'REDO_REQUIRED']) %}
+
+        <div class="card milestone-roadmap-card {% if is_completed %}card-completed{% elif is_locked %}card-locked{% elif is_redo %}card-redo{% elif is_under_review %}card-review{% else %}card-available{% endif %}">
+          <div class="milestone-card-layout">
+            <div class="milestone-card-left">
+              <!-- Week Avatar Badge -->
+              <div class="milestone-avatar-square mono {% if is_completed %}avatar-completed{% elif is_locked %}avatar-locked{% else %}avatar-active{% endif %}">
+                W{{ m.week_number }}
+              </div>
+
+              <!-- Milestone Body -->
+              <div class="milestone-info-block">
+                <div class="milestone-title-row">
+                  <h3 class="milestone-name">{{ m.title }}</h3>
+                  {% if is_completed %}
+                    <span class="status-badge badge-completed">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      Completed
+                    </span>
+                  {% elif is_under_review %}
+                    <span class="status-badge badge-submitted">Under Review</span>
+                  {% elif is_redo %}
+                    <span class="status-badge badge-revision">Revision Required</span>
+                  {% elif is_locked %}
+                    <span class="status-badge badge-locked">Locked 🔒</span>
+                  {% else %}
+                    <span class="status-badge badge-available">Available</span>
+                  {% endif %}
+                </div>
+
+                <p class="milestone-objective-desc">
+                  {{ m.objective }}
+                </p>
+
+                <div class="milestone-specs-row mono">
+                  <span class="spec-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    {{ m.total_tasks_count }} Tasks ({{ m.completed_tasks_count }} done)
+                  </span>
+                  <span class="spec-dot">•</span>
+                  <span class="spec-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    {{ m.deliverables|length }} Deliverables
+                  </span>
+                  {% if m.due_at %}
+                    <span class="spec-dot">•</span>
+                    <span class="spec-item {% if m.is_overdue and not is_completed %}text-danger{% endif %}">
+                      Due: {{ m.due_at.strftime('%d %b %Y') }}
+                    </span>
+                  {% endif %}
+                  {% if m.approved_at %}
+                    <span class="spec-dot">•</span>
+                    <span class="spec-approved">
+                      ✓ Approved on {{ m.approved_at.strftime('%d %b %Y') if m.approved_at.strftime is defined else m.approved_at }}
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Milestone Card Action -->
+            <div class="milestone-card-right">
+              {% if not is_locked %}
+                <a href="{{ url_for('student.week_detail', milestone_id=m.id) }}" class="btn btn-outline-primary btn-sm">
+                  <span>Open Workspace →</span>
+                </a>
+              {% else %}
+                <button class="btn btn-secondary btn-sm disabled" disabled title="Unlock by completing Week {{ m.week_number - 1 }}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <span>Locked</span>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
 </div>
 {% endblock %}

@@ -82,7 +82,7 @@
         </div>
       </div>
 
-      <div class="form-row cols3">
+      <div class="form-row cols4" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem;">
         <div>
           <label class="form-label">Project Category / Domain *</label>
           <input type="text" name="domain" class="form-input" required placeholder="e.g. AI & Data Science">
@@ -96,10 +96,15 @@
           </select>
         </div>
         <div>
+          <label class="form-label">Max Intern Capacity</label>
+          <input type="number" name="max_capacity" class="form-input" min="1" max="100" value="10" placeholder="10">
+        </div>
+        <div>
           <label class="form-label">Initial Status</label>
           <select name="status" class="form-select">
-            <option value="ACTIVE" selected>Active (Available for Assignment)</option>
+            <option value="ACTIVE" selected>Active</option>
             <option value="INACTIVE">Inactive</option>
+            <option value="ARCHIVED">Archived</option>
           </select>
         </div>
       </div>

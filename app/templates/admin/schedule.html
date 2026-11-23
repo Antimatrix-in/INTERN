@@ -1,0 +1,302 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Attendance Policy, Holidays & Schedule Hub — ANTI MATRIX{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="h3 font-weight-black mb-1" style="font-weight: 800; letter-spacing: -0.02em;">
+        Scheduling, Policy & Holiday Management Hub
+      </h2>
+      <p class="text-muted small mb-0">
+        Configure portal-wide working hour rules, maintain recognized company holidays, and track intern completion schedules.
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addHolidayModal">
+        + Add Company Holiday
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Section 1: Organizational Attendance Policy -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm border-0 h-100" style="border-radius: 14px; background: #FFF;">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 font-weight-bold" style="font-size: 1rem;">Attendance Policy Configuration</h5>
+          <span class="badge bg-success">ACTIVE POLICY</span>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('admin.update_policy') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label font-weight-bold small">Shift Start (UTC)</label>
+                <input type="time" name="work_start_time" value="{{ policy.work_start_time }}" class="form-control form-control-sm font-mono" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label font-weight-bold small">Shift End (UTC)</label>
+                <input type="time" name="work_end_time" value="{{ policy.work_end_time }}" class="form-control form-control-sm font-mono" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label font-weight-bold small">Late Arrival Threshold (UTC)</label>
+              <input type="time" name="late_threshold_time" value="{{ policy.late_threshold_time }}" class="form-control form-control-sm font-mono" required>
+              <div class="text-muted small" style="font-size: 0.72rem;">Check-ins after this time are automatically marked LATE.</div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label font-weight-bold small">Half Day Min (Hours)</label>
+                <input type="number" step="0.5" name="half_day_minimum_hours" value="{{ policy.half_day_minimum_hours }}" class="form-control form-control-sm font-mono" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label font-weight-bold small">Full Day Min (Hours)</label>
+                <input type="number" step="0.5" name="full_day_minimum_hours" value="{{ policy.full_day_minimum_hours }}" class="form-control form-control-sm font-mono" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label font-weight-bold small">Working Days (Comma-separated)</label>
+              <input type="text" name="working_days_csv" value="{{ policy.working_days_csv }}" class="form-control form-control-sm font-mono" placeholder="MON,TUE,WED,THU,FRI" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label font-weight-bold small">Minimum Attendance Requirement (%)</label>
+              <input type="number" step="1.0" min="50" max="100" name="min_attendance_percentage" value="{{ policy.min_attendance_percentage }}" class="form-control form-control-sm font-mono" required>
+              <div class="text-muted small" style="font-size: 0.72rem;">Threshold checked during certificate issuance validation.</div>
+            </div>
+
+            <button type="submit" class="btn btn-sm btn-dark w-100 font-weight-bold">
+              Save Policy Changes
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Official Company Holiday Calendar -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0 h-100" style="border-radius: 14px; background: #FFF;">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 font-weight-bold" style="font-size: 1rem;">Company Holiday Registry ({{ holidays|length }})</h5>
+          <span class="text-muted small">Excluded from working days</span>
+        </div>
+        <div class="card-body p-0">
+          {% if holidays %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.84rem;">
+              <thead class="table-light">
+                <tr class="text-muted text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                  <th class="ps-4">Date</th>
+                  <th>Holiday Name</th>
+                  <th>Description</th>
+                  <th>Recurring</th>
+                  <th class="text-end pe-4">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for h in holidays %}
+                <tr>
+                  <td class="ps-4 font-mono font-weight-bold text-dark">
+                    {{ h.holiday_date.strftime('%d %b %Y') }}
+                  </td>
+                  <td class="font-weight-bold text-dark">
+                    {{ h.name }}
+                  </td>
+                  <td class="text-muted small">
+                    {{ h.description or '—' }}
+                  </td>
+                  <td>
+                    {% if h.is_recurring %}
+                      <span class="badge bg-light text-primary border">Annual</span>
+                    {% else %}
+                      <span class="badge bg-light text-secondary border">One-time</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end pe-4">
+                    <form method="POST" action="{{ url_for('admin.delete_holiday', holiday_id=h.id) }}" onsubmit="return confirm('Remove holiday {{ h.name }}?');" style="display: inline-block;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger px-2 py-0" style="font-size: 0.72rem;">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <p class="mb-0">No company holidays registered.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Active Internship Schedules & Pace Trajectory -->
+  <div class="card shadow-sm border-0" style="border-radius: 14px; background: #FFF;">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0 font-weight-bold" style="font-size: 1rem;">Active Internship Schedules & Completion Trajectory</h5>
+        <div class="text-muted small">Enforces audit rule: automatic changes without authorized action are strictly prohibited.</div>
+      </div>
+      <span class="badge bg-primary">{{ internship_schedules|length }} Active Internships</span>
+    </div>
+    <div class="card-body p-0">
+      {% if internship_schedules %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+          <thead class="table-light">
+            <tr class="text-muted text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+              <th class="ps-4">Intern</th>
+              <th>Track & Period</th>
+              <th>Working Days</th>
+              <th>Elapsed Days</th>
+              <th>Leaves Taken</th>
+              <th>Schedule Pace</th>
+              <th class="text-end pe-4">Modify Schedule</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in internship_schedules %}
+            {% set i = item.internship %}
+            {% set sum = item.summary %}
+            {% set s = i.student %}
+            <tr>
+              <td class="ps-4">
+                <div class="font-weight-bold text-dark">{{ s.full_name }}</div>
+                <div class="text-muted small font-mono">{{ s.student_uid }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border font-mono">{{ i.duration_months }} Month(s)</span>
+                <div class="font-mono small mt-1 text-muted">{{ sum.start_date }} &rarr; {{ sum.end_date }}</div>
+              </td>
+              <td class="font-mono font-weight-bold text-dark">
+                {{ sum.total_working_days }} days
+              </td>
+              <td class="font-mono text-success">
+                {{ sum.working_days_elapsed }} / {{ sum.total_working_days }}
+              </td>
+              <td class="font-mono text-primary font-weight-bold">
+                {{ sum.approved_leave_days }} days
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="font-mono font-weight-bold {% if sum.schedule_pace_percentage >= 90 %}text-success{% elif sum.schedule_pace_percentage >= 75 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ sum.schedule_pace_percentage }}%
+                  </span>
+                  <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                    <div class="progress-bar {% if sum.schedule_pace_percentage >= 90 %}bg-success{% elif sum.schedule_pace_percentage >= 75 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ sum.schedule_pace_percentage }}%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="text-end pe-4">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openModifyScheduleModal('{{ i.id }}', '{{ s.full_name }}', '{{ sum.end_date }}')">
+                  Adjust Dates
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <p class="mb-0">No active internships found.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Holiday Modal -->
+<div class="modal fade" id="addHolidayModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_holiday') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold">Add Company Holiday</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small">Holiday Date *</label>
+            <input type="date" name="holiday_date" class="form-control form-control-sm font-mono" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small">Holiday Name *</label>
+            <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Independence Day, Annual Founder's Day" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small">Description (Optional)</label>
+            <input type="text" name="description" class="form-control form-control-sm" placeholder="Optional notes...">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_recurring" value="1" id="recCheck">
+            <label class="form-check-label small" for="recCheck">
+              Recurring annual holiday
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary">Save Holiday</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modify Schedule Modal -->
+<div class="modal fade" id="modifyScheduleModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="modifyScheduleForm" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold" id="modifyScheduleModalTitle">Modify Internship Schedule</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning small mb-3">
+            <strong>Mandatory Audit Policy:</strong> Automated modification of internship completion dates is strictly prohibited. All adjustments require authorized administrator justification.
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small">New Completion End Date *</label>
+            <input type="date" name="new_end_date" id="modalNewEndDate" class="form-control form-control-sm font-mono" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small text-danger">Authorized Reason for Schedule Extension / Modification *</label>
+            <textarea name="reason" rows="3" class="form-control form-control-sm" placeholder="Provide authorized justification (e.g., Medical leave extension, academic exam clash)..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-danger">Confirm Schedule Modification</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModifyScheduleModal(internshipId, internName, currentEndDate) {
+    document.getElementById('modifyScheduleModalTitle').innerText = `Modify Schedule: ${internName}`;
+    document.getElementById('modifyScheduleForm').action = `/admin/schedule/internships/${internshipId}/modify`;
+    document.getElementById('modalNewEndDate').value = currentEndDate;
+    const modal = new bootstrap.Modal(document.getElementById('modifyScheduleModal'));
+    modal.show();
+  }
+</script>
+{% endblock %}
+

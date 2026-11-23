@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Technical Mentor Portal | Anti-Matrix Enterprise{% endblock %}</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Core CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <style>
+    :root {
+      --brand-primary: #10B981;
+      --brand-emerald: #059669;
+      --brand-lime: #A6FD3A;
+      --brand-obsidian: #030A07;
+      --brand-bg: #F8FAFC;
+      --border-light: #E2E8F0;
+    }
+    body {
+      background-color: var(--brand-bg);
+      font-family: 'Inter', sans-serif;
+      color: #0F172A;
+      min-height: 100vh;
+    }
+    .mentor-sidebar {
+      width: 260px;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      background: #FFFFFF;
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      z-index: 1040;
+    }
+    .mentor-main-content {
+      margin-left: 260px;
+      padding: 1.5rem 2rem 3rem 2rem;
+      min-height: 100vh;
+    }
+    .nav-item-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 1rem;
+      margin: 0.125rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .nav-item-link:hover {
+      background: #F1F5F9;
+      color: #0F172A;
+    }
+    .nav-item-link.active {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--brand-emerald);
+      font-weight: 700;
+    }
+    .nav-item-link svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2;
+    }
+    .sidebar-section-label {
+      padding: 0.75rem 1.75rem 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94A3B8;
+    }
+    @media (max-width: 991.98px) {
+      .mentor-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.2s ease-in-out;
+      }
+      .mentor-sidebar.show {
+        transform: translateX(0);
+      }
+      .mentor-main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="mentor-sidebar" id="mentorSidebar">
+    <!-- Brand Header -->
+    <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--border-light) !important;">
+      <a href="{{ url_for('mentor.dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none">
+        <img src="{{ url_for('static', filename='img/anti-matrix-logo.png') }}" alt="Anti-Matrix" style="height: 28px; width: auto;" onerror="this.style.display='none'">
+        <div class="d-flex flex-column">
+          <span class="font-weight-black text-dark" style="font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; font-size: 1.05rem;">ANTI-MATRIX</span>
+          <span class="text-muted font-mono" style="font-size: 0.65rem; font-weight: 700; color: var(--brand-emerald) !important;">MENTOR PORTAL</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Navigation List -->
+    <div class="flex-grow-1 overflow-auto py-3">
+      <div class="sidebar-section-label">Supervision</div>
+      <a href="{{ url_for('mentor.dashboard') }}" class="nav-item-link {% if request.endpoint == 'mentor.dashboard' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Dashboard
+      </a>
+
+      <a href="{{ url_for('mentor.interns') }}" class="nav-item-link {% if request.endpoint in ['mentor.interns', 'mentor.intern_detail'] %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Assigned Interns
+      </a>
+
+      <a href="{{ url_for('mentor.submissions') }}" class="nav-item-link {% if request.endpoint in ['mentor.submissions', 'mentor.review_submission'] %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        Review Queue
+        {% if current_user.pending_reviews_count > 0 %}
+        <span class="badge bg-danger ms-auto rounded-pill" style="font-size: 0.65rem;">{{ current_user.pending_reviews_count }}</span>
+        {% endif %}
+      </a>
+
+      <a href="{{ url_for('mentor.attendance') }}" class="nav-item-link {% if request.endpoint in ['mentor.attendance', 'mentor.mentor_attendance'] %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        Mentee Attendance
+      </a>
+
+      <a href="{{ url_for('mentor.leave_queue') }}" class="nav-item-link {% if request.endpoint in ['mentor.leave_queue', 'mentor.mentor_leave_dashboard'] %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        Leave Queue
+      </a>
+
+      <div class="sidebar-section-label mt-3">Insights & Performance</div>
+      <a href="{{ url_for('mentor.analytics') }}" class="nav-item-link {% if request.endpoint == 'mentor.analytics' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        Performance Analytics
+      </a>
+
+      <a href="{{ url_for('mentor.profile') }}" class="nav-item-link {% if request.endpoint == 'mentor.profile' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        Availability & Profile
+      </a>
+
+      <div class="sidebar-section-label mt-3">Communications</div>
+      <a href="{{ url_for('mentor.mentor_announcements') }}" class="nav-item-link {% if request.endpoint == 'mentor.mentor_announcements' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        Mentee Broadcasts
+      </a>
+
+      {% if current_user.role in ['admin', 'super_admin'] %}
+      <div class="sidebar-section-label mt-3">Administration</div>
+      <a href="{{ url_for('admin.dashboard') }}" class="nav-item-link text-primary font-weight-bold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+        Switch to Admin Portal
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- User Profile Footer -->
+    <div class="p-3 border-top bg-light" style="border-color: var(--border-light) !important;">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2 overflow-hidden">
+          <div class="rounded-circle d-flex align-items-center justify-content-center font-weight-bold text-white shadow-xs" style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--brand-emerald) 0%, #047857 100%); font-size: 0.75rem;">
+            {{ current_user.full_name[:2]|upper }}
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-xs font-weight-bold text-dark text-truncate">{{ current_user.full_name }}</div>
+            <div class="text-muted font-mono" style="font-size: 0.65rem;">{{ current_user.employee_id or 'MENTOR' }}</div>
+          </div>
+        </div>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-light border p-1 text-muted hover-danger" title="Sign Out">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="mentor-main-content">
+    <!-- Mobile Header -->
+    <div class="d-lg-none d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
+      <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('mentorSidebar').classList.toggle('show')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+      <span class="font-weight-bold text-dark">Anti-Matrix Mentor Portal</span>
+      <div style="width: 32px;"></div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow-xs border-0 rounded-3 text-xs font-weight-medium d-flex align-items-center justify-content-between p-3 mb-2" role="alert">
+              <div>{{ message }}</div>
+              <button type="button" class="btn-close p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

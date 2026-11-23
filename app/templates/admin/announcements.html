@@ -1,0 +1,165 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Broadcast Announcements — ANTI MATRIX Admin{% endblock %}
+{% block breadcrumb_title %}Announcements &amp; Communication{% endblock %}
+
+{% block content %}
+<div class="workspace-announcements" style="max-width: 1200px; margin: 0 auto; padding-bottom: 50px;">
+  <!-- Header with Broadcast & Automation triggers -->
+  <header class="page-top-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 class="page-main-title" style="margin: 0 0 6px 0; font-size: 24px; font-weight: 700;">Broadcast &amp; Communication Center</h1>
+      <p class="page-main-subtitle" style="margin: 0; color: #94A3B8; font-size: 14px;">
+        Publish system-wide or track-specific announcements, inspect read metrics, and run automated deadline triggers.
+      </p>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <!-- Trigger Deadline Engine -->
+      <form method="POST" action="{{ url_for('admin.trigger_deadline_check') }}" style="margin: 0;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; font-size: 13px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>Run Deadline Check Now</span>
+        </button>
+      </form>
+
+      <!-- New Announcement Button -->
+      <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('announcementModal').style.display='flex';" style="display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; font-size: 13px; font-weight: 700;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>New Broadcast</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Published Announcements Roster -->
+  <section class="card" style="background: #0B130E; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; padding: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding-bottom: 14px;">
+      <h2 style="font-size: 16px; font-weight: 700; color: #10B981; margin: 0; text-transform: uppercase; letter-spacing: 0.8px;">
+        Published Broadcasts ({{ announcements|length }})
+      </h2>
+    </div>
+
+    {% if announcements %}
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        {% for a in announcements %}
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(148, 163, 184, 0.15); border-left: 4px solid {% if a.priority == 'URGENT' %}#DC2626{% else %}#10B981{% endif %}; border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 280px;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; background: {% if a.priority == 'URGENT' %}#DC2626{% else %}#10B981{% endif %}; color: #FFFFFF;">
+                  {{ a.priority }}
+                </span>
+                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; background: rgba(148, 163, 184, 0.15); color: #94A3B8;">
+                  Audience: {{ a.target_role }}
+                </span>
+                {% if a.department %}
+                  <span style="font-size: 11px; color: #0EA5E9; background: rgba(14, 165, 233, 0.15); padding: 3px 8px; border-radius: 4px;">Dept: {{ a.department }}</span>
+                {% endif %}
+                {% if a.project %}
+                  <span style="font-size: 11px; color: #A855F7; background: rgba(168, 85, 247, 0.15); padding: 3px 8px; border-radius: 4px;">Project: {{ a.project.project_code }}</span>
+                {% endif %}
+                <span style="font-size: 11px; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 4px; font-weight: 700;">
+                  {{ a.read_count }} Acknowledged
+                </span>
+              </div>
+
+              <h3 style="margin: 0 0 10px 0; font-size: 17px; font-weight: 700; color: #F8FAFC;">{{ a.title }}</h3>
+              <p style="margin: 0 0 14px 0; font-size: 14px; color: #CBD5E1; line-height: 1.6; white-space: pre-line;">{{ a.content }}</p>
+
+              <div style="font-size: 12px; color: #64748B; display: flex; gap: 16px; align-items: center;">
+                <span>Author: <strong>{{ a.author.full_name or a.author.email if a.author else 'System Admin' }}</strong></span>
+                <span>&bull;</span>
+                <span>Created: {{ a.created_at.strftime('%B %d, %Y - %H:%M UTC') }}</span>
+              </div>
+            </div>
+
+            <div>
+              <form method="POST" action="{{ url_for('admin.delete_announcement', announcement_id=a.id) }}" onsubmit="return confirm('Permanently remove this announcement?');" style="margin: 0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 6px 12px; font-size: 12px; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">
+                  Delete
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 60px 20px;">
+        <h3 style="font-size: 18px; font-weight: 700; color: #F8FAFC; margin: 0 0 6px 0;">No Announcements Published</h3>
+        <p style="font-size: 14px; color: #94A3B8; margin: 0;">Publish an announcement using the New Broadcast button to send system-wide updates.</p>
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+<!-- Modal: New Announcement Broadcast -->
+<div id="announcementModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+  <div style="background: #0B130E; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; width: 100%; max-width: 620px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 14px;">
+      <h2 style="font-size: 18px; font-weight: 700; color: #F8FAFC; margin: 0;">Publish System Broadcast</h2>
+      <button type="button" onclick="document.getElementById('announcementModal').style.display='none';" style="background: none; border: none; color: #94A3B8; font-size: 20px; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.create_announcement') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">Announcement Title *</label>
+        <input type="text" name="title" required placeholder="e.g., Final Milestone Submission Window Extended" style="width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.25); background: #030A07; color: #FFFFFF; font-size: 14px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">Target Audience</label>
+          <select name="target_role" style="width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.25); background: #030A07; color: #FFFFFF; font-size: 14px;">
+            <option value="ALL">All Users (Interns &amp; Mentors)</option>
+            <option value="STUDENT">Interns Only</option>
+            <option value="MENTOR">Technical Mentors Only</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">Priority Level</label>
+          <select name="priority" style="width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.25); background: #030A07; color: #FFFFFF; font-size: 14px;">
+            <option value="NORMAL">Normal</option>
+            <option value="URGENT">Urgent (Red Alert)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">Department (Optional)</label>
+          <select name="department" style="width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.25); background: #030A07; color: #FFFFFF; font-size: 14px;">
+            <option value="">All Departments</option>
+            {% for d in departments %}
+              <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">Project (Optional)</label>
+          <select name="project_id" style="width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.25); background: #030A07; color: #FFFFFF; font-size: 14px;">
+            <option value="">All Projects</option>
+            {% for p in projects %}
+              <option value="{{ p.id }}">{{ p.project_code }} - {{ p.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 22px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">Message Content *</label>
+        <textarea name="content" rows="4" required placeholder="Type the broadcast message..." style="width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.25); background: #030A07; color: #FFFFFF; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" onclick="document.getElementById('announcementModal').style.display='none';" class="btn btn-secondary btn-sm" style="padding: 9px 18px;">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="padding: 9px 24px; font-weight: 700;">Broadcast &rarr;</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

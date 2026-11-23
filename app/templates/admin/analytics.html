@@ -1,0 +1,631 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Performance Analytics & BI Hub | Anti-Matrix Enterprise{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Breadcrumb & Page Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 pb-3 border-bottom" style="border-color: var(--border-light) !important;">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald); font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.25);">
+          ENTERPRISE BI TELEMETRY
+        </span>
+        <span class="text-xs text-muted font-mono">Module 6 • Phase 2</span>
+      </div>
+      <h1 class="h3 font-weight-bold text-dark mb-1" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">
+        Organization Performance & Analytics
+      </h1>
+      <p class="text-sm text-muted mb-0">Cross-cohort velocity, submission throughput, mentor workload distribution, and milestone analytics.</p>
+    </div>
+
+    <!-- Action Shortcuts -->
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('admin.reports_hub') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 font-weight-medium">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Report Center
+      </a>
+      <div class="dropdown">
+        <button class="btn btn-sm text-white d-flex align-items-center gap-1.5 font-weight-semibold shadow-xs" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background: var(--brand-emerald); border-color: var(--brand-emerald);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Export CSV
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+          <li><h6 class="dropdown-header text-xs text-uppercase font-mono">Download Dataset</h6></li>
+          <li><a class="dropdown-item text-xs py-2" href="{{ url_for('admin.export_csv_report', report_type='interns_performance') }}">Candidate Performance CSV</a></li>
+          <li><a class="dropdown-item text-xs py-2" href="{{ url_for('admin.export_csv_report', report_type='mentors_performance') }}">Faculty Supervision CSV</a></li>
+          <li><a class="dropdown-item text-xs py-2" href="{{ url_for('admin.export_csv_report', report_type='projects_summary') }}">Project Portfolio CSV</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-xs py-2" href="{{ url_for('admin.export_csv_report', report_type='organization_monthly') }}">Monthly Executive CSV</a></li>
+          <li><a class="dropdown-item text-xs py-2" href="{{ url_for('admin.export_csv_report', report_type='internship_completions') }}">Completion Verification CSV</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Primary Organizational KPI Cards -->
+  <div class="row g-3">
+    <!-- Active Interns -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">TOTAL INTERNS</div>
+        <div class="h4 font-weight-bold text-dark mb-0" style="font-weight: 800;">{{ kpis.total_interns }}</div>
+        <div class="text-xs text-muted mt-1">{{ kpis.active_interns }} active • {{ kpis.completed_internships }} alumni</div>
+      </div>
+    </div>
+
+    <!-- Active Projects -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">CURRICULUM PROJECTS</div>
+        <div class="h4 font-weight-bold text-dark mb-0" style="font-weight: 800;">{{ kpis.active_projects }}</div>
+        <div class="text-xs text-muted mt-1">{{ kpis.total_projects }} total registered</div>
+      </div>
+    </div>
+
+    <!-- Total Mentors -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">SUPERVISORY FACULTY</div>
+        <div class="h4 font-weight-bold text-dark mb-0" style="font-weight: 800;">{{ kpis.total_mentors }}</div>
+        <div class="text-xs text-muted mt-1">Active technical mentors</div>
+      </div>
+    </div>
+
+    <!-- Pending Reviews -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #F59E0B;">PENDING REVIEWS</div>
+        <div class="h4 font-weight-bold mb-0" style="font-weight: 800; color: {% if kpis.pending_submissions > 0 %}#D97706{% else %}#0F172A{% endif %};">
+          {{ kpis.pending_submissions }}
+        </div>
+        <div class="text-xs text-muted mt-1">Awaiting mentor action</div>
+      </div>
+    </div>
+
+    <!-- On-Time Rate -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: var(--brand-emerald);">ON-TIME DELIVERY</div>
+        <div class="h4 font-weight-bold mb-0" style="font-weight: 800; color: var(--brand-emerald);">
+          {{ kpis.on_time_rate }}%
+        </div>
+        <div class="text-xs text-muted mt-1">{{ kpis.total_submissions }} submissions logged</div>
+      </div>
+    </div>
+
+    <!-- Avg Evaluation Score -->
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #8B5CF6;">AVG RUBRIC SCORE</div>
+        <div class="h4 font-weight-bold text-dark mb-0" style="font-weight: 800;">
+          {{ kpis.avg_evaluation_score }}<span class="text-xs font-weight-normal text-muted">/100</span>
+        </div>
+        <div class="text-xs text-muted mt-1">Quality benchmark</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabbed Telemetry Hub Navigation -->
+  <div class="border-bottom" style="border-color: var(--border-light) !important;">
+    <ul class="nav nav-tabs border-0" id="analyticsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a class="nav-link font-weight-semibold {% if tab == 'overview' %}active text-dark border-bottom border-2 border-success{% else %}text-muted{% endif %}" href="{{ url_for('admin.analytics', tab='overview') }}">
+          <div class="d-flex align-items-center gap-1.5 py-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            Executive Overview
+          </div>
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link font-weight-semibold {% if tab == 'interns' %}active text-dark border-bottom border-2 border-success{% else %}text-muted{% endif %}" href="{{ url_for('admin.analytics', tab='interns') }}">
+          <div class="d-flex align-items-center gap-1.5 py-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Candidate Performance ({{ interns_data|length }})
+          </div>
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link font-weight-semibold {% if tab == 'mentors' %}active text-dark border-bottom border-2 border-success{% else %}text-muted{% endif %}" href="{{ url_for('admin.analytics', tab='mentors') }}">
+          <div class="d-flex align-items-center gap-1.5 py-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Faculty Mentors ({{ mentors_data|length }})
+          </div>
+        </a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link font-weight-semibold {% if tab == 'projects' %}active text-dark border-bottom border-2 border-success{% else %}text-muted{% endif %}" href="{{ url_for('admin.analytics', tab='projects') }}">
+          <div class="d-flex align-items-center gap-1.5 py-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            Project Portfolios ({{ projects_data|length }})
+          </div>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- TAB 1: EXECUTIVE OVERVIEW -->
+  {% if tab == 'overview' %}
+  <div class="space-y-6">
+
+    <!-- Secondary Telemetry Meters -->
+    <div class="row g-4">
+      <!-- Cohort Completion Velocity -->
+      <div class="col-lg-6">
+        <div class="p-4 bg-white rounded-3 border shadow-xs h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="h6 font-weight-bold text-dark mb-0">Cohort Progression Velocity</h5>
+            <span class="badge font-mono" style="background: rgba(16, 185, 129, 0.1); color: var(--brand-emerald);">
+              {{ kpis.avg_completion_rate }}% AVG COMPLETION
+            </span>
+          </div>
+
+          <p class="text-xs text-muted mb-3">Overall milestone completion rate across all active candidates.</p>
+
+          <div class="progress mb-3" style="height: 10px; background: #e2e8f0; border-radius: 999px;">
+            <div class="progress-bar" role="progressbar" style="width: {{ kpis.avg_completion_rate }}%; background: linear-gradient(90deg, var(--brand-emerald) 0%, #059669 100%); border-radius: 999px;" aria-valuenow="{{ kpis.avg_completion_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+
+          <div class="row text-center g-2 pt-2 border-top">
+            <div class="col-4">
+              <div class="text-xs text-muted">1-Month Track</div>
+              <div class="font-weight-bold text-dark font-mono mt-0.5">{{ kpis.duration_distribution['1_month'] }} Interns</div>
+            </div>
+            <div class="col-4 border-start">
+              <div class="text-xs text-muted">3-Month Track</div>
+              <div class="font-weight-bold text-dark font-mono mt-0.5">{{ kpis.duration_distribution['3_months'] }} Interns</div>
+            </div>
+            <div class="col-4 border-start">
+              <div class="text-xs text-muted">6-Month Track</div>
+              <div class="font-weight-bold text-dark font-mono mt-0.5">{{ kpis.duration_distribution['6_months'] }} Interns</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submission Quality & Turnaround -->
+      <div class="col-lg-6">
+        <div class="p-4 bg-white rounded-3 border shadow-xs h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="h6 font-weight-bold text-dark mb-0">Evaluation & Quality Ratios</h5>
+            <span class="badge font-mono" style="background: rgba(99, 102, 241, 0.1); color: #6366F1;">
+              {{ kpis.submission_approval_rate }}% APPROVAL VELOCITY
+            </span>
+          </div>
+
+          <p class="text-xs text-muted mb-3">First-pass milestone approvals vs. mentor revision requests.</p>
+
+          <div class="d-flex align-items-center justify-content-between text-xs font-mono mb-1">
+            <span class="text-success font-weight-bold">Approved: {{ kpis.submission_approval_rate }}%</span>
+            <span class="text-warning font-weight-bold">Revisions/Redos: {{ kpis.revision_rate }}%</span>
+          </div>
+
+          <div class="progress mb-3" style="height: 10px; background: #e2e8f0; border-radius: 999px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: {{ kpis.submission_approval_rate }}%;" aria-valuenow="{{ kpis.submission_approval_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ kpis.revision_rate }}%;" aria-valuenow="{{ kpis.revision_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center pt-2 border-top text-xs text-muted">
+            <span>Overdue Milestones: <strong class="text-danger font-mono">{{ kpis.overdue_milestones_count }}</strong></span>
+            <span>Total Submissions Reviewed: <strong class="text-dark font-mono">{{ kpis.total_submissions }}</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Preview Roster: Top Active Interns -->
+    <div class="p-4 bg-white rounded-3 border shadow-xs">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="h6 font-weight-bold text-dark mb-0">Top Active Candidate Highlights</h5>
+          <span class="text-xs text-muted">Recent milestone completions and evaluation ratings.</span>
+        </div>
+        <a href="{{ url_for('admin.analytics', tab='interns') }}" class="btn btn-xs btn-outline-secondary font-mono text-xs">
+          View All Interns →
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-sm">
+          <thead class="table-light text-xs text-uppercase font-mono">
+            <tr>
+              <th>Intern ID</th>
+              <th>Candidate Name</th>
+              <th>Project</th>
+              <th>Faculty Mentor</th>
+              <th>Progress</th>
+              <th>On-Time</th>
+              <th>Score</th>
+              <th class="text-end">Scorecard</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in interns_data[:6] %}
+            <tr>
+              <td class="font-mono text-xs font-weight-bold">{{ item.intern_id }}</td>
+              <td>
+                <div class="font-weight-semibold text-dark">{{ item.full_name }}</div>
+                <div class="text-xs text-muted">{{ item.email }}</div>
+              </td>
+              <td>
+                <span class="text-truncate d-inline-block" style="max-width: 180px;">{{ item.project_title }}</span>
+              </td>
+              <td>{{ item.mentor_name }}</td>
+              <td style="min-width: 120px;">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height: 6px;">
+                    <div class="progress-bar bg-success" style="width: {{ item.progress_percent }}%;"></div>
+                  </div>
+                  <span class="font-mono text-xs">{{ item.progress_percent }}%</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge font-mono {% if item.on_time_rate >= 80 %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %}">
+                  {{ item.on_time_rate }}%
+                </span>
+              </td>
+              <td>
+                {% if item.avg_score is not none %}
+                  <span class="font-weight-bold font-mono text-dark">{{ item.avg_score }}/100</span>
+                {% else %}
+                  <span class="text-muted text-xs font-mono">Pending</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('admin.intern_analytics_detail', student_id=item.student.id) }}" class="btn btn-xs btn-light border font-mono">
+                  Scorecard
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No candidate records enrolled yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  {% endif %}
+
+  <!-- TAB 2: CANDIDATE PERFORMANCE -->
+  {% if tab == 'interns' %}
+  <div class="space-y-4">
+    <!-- Filter Bar -->
+    <div class="p-3 bg-white rounded-3 border shadow-xs">
+      <form method="GET" action="{{ url_for('admin.analytics') }}" class="row g-2 align-items-center">
+        <input type="hidden" name="tab" value="interns">
+
+        <div class="col-md-3">
+          <input type="text" name="search" class="form-control form-control-sm" placeholder="Search candidate ID, name, email..." value="{{ search }}">
+        </div>
+
+        <div class="col-md-2">
+          <select name="project_id" class="form-select form-select-sm">
+            <option value="">All Projects</option>
+            {% for p in all_projects %}
+            <option value="{{ p.id }}" {% if project_id == p.id %}selected{% endif %}>{{ p.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <select name="mentor_id" class="form-select form-select-sm">
+            <option value="">All Mentors</option>
+            {% for m in all_mentors %}
+            <option value="{{ m.id }}" {% if mentor_id == m.id %}selected{% endif %}>{{ m.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <select name="status" class="form-select form-select-sm">
+            <option value="">All Statuses</option>
+            <option value="ACTIVE" {% if status == 'ACTIVE' %}selected{% endif %}>Active</option>
+            <option value="COMPLETED" {% if status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+            <option value="PENDING" {% if status == 'PENDING' %}selected{% endif %}>Pending</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <select name="sort_by" class="form-select form-select-sm">
+            <option value="progress" {% if sort_by == 'progress' %}selected{% endif %}>Sort by Progress</option>
+            <option value="score" {% if sort_by == 'score' %}selected{% endif %}>Sort by Score</option>
+            <option value="on_time" {% if sort_by == 'on_time' %}selected{% endif %}>Sort by Timeliness</option>
+            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort by Name</option>
+            <option value="id" {% if sort_by == 'id' %}selected{% endif %}>Sort by ID</option>
+          </select>
+        </div>
+
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-sm btn-dark flex-grow-1">Filter</button>
+          <a href="{{ url_for('admin.analytics', tab='interns') }}" class="btn btn-sm btn-outline-secondary" title="Reset Filters">✕</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Candidate Performance Table -->
+    <div class="bg-white rounded-3 border shadow-xs overflow-hidden">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-sm">
+          <thead class="table-light text-xs text-uppercase font-mono">
+            <tr>
+              <th>Intern ID</th>
+              <th>Candidate Name & Details</th>
+              <th>Project & Mentor</th>
+              <th>Status</th>
+              <th>Progress</th>
+              <th>Milestones</th>
+              <th>Tasks</th>
+              <th>On-Time</th>
+              <th>Avg Score</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in interns_data %}
+            <tr>
+              <td class="font-mono text-xs font-weight-bold">{{ item.intern_id }}</td>
+              <td>
+                <div class="font-weight-semibold text-dark">{{ item.full_name }}</div>
+                <div class="text-xs text-muted">{{ item.email }} • {{ item.college }}</div>
+              </td>
+              <td>
+                <div class="text-dark font-weight-medium text-truncate" style="max-width: 170px;">{{ item.project_title }}</div>
+                <div class="text-xs text-muted">Mentor: {{ item.mentor_name }}</div>
+              </td>
+              <td>
+                <span class="badge font-mono text-xs {% if item.status == 'ACTIVE' %}bg-success-subtle text-success border border-success-subtle{% elif item.status == 'COMPLETED' %}bg-primary-subtle text-primary border border-primary-subtle{% else %}bg-secondary-subtle text-secondary{% endif %}">
+                  {{ item.status }}
+                </span>
+              </td>
+              <td style="min-width: 110px;">
+                <div class="d-flex align-items-center gap-1.5">
+                  <div class="progress flex-grow-1" style="height: 6px;">
+                    <div class="progress-bar bg-success" style="width: {{ item.progress_percent }}%;"></div>
+                  </div>
+                  <span class="font-mono text-xs">{{ item.progress_percent }}%</span>
+                </div>
+              </td>
+              <td class="font-mono text-xs">{{ item.completed_milestones }}/{{ item.total_milestones }}</td>
+              <td class="font-mono text-xs">{{ item.completed_tasks }}/{{ item.total_tasks }}</td>
+              <td>
+                <span class="badge font-mono text-xs {% if item.on_time_rate >= 80 %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %}">
+                  {{ item.on_time_rate }}%
+                </span>
+              </td>
+              <td>
+                {% if item.avg_score is not none %}
+                  <span class="font-weight-bold font-mono text-dark">{{ item.avg_score }}/100</span>
+                {% else %}
+                  <span class="text-muted text-xs font-mono">N/A</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('admin.intern_analytics_detail', student_id=item.student.id) }}" class="btn btn-xs btn-outline-dark font-mono">
+                  Full Scorecard
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="10" class="text-center py-5 text-muted">No candidate records match the selected filter criteria.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TAB 3: FACULTY MENTORS -->
+  {% if tab == 'mentors' %}
+  <div class="space-y-4">
+    <!-- Filter Bar -->
+    <div class="p-3 bg-white rounded-3 border shadow-xs">
+      <form method="GET" action="{{ url_for('admin.analytics') }}" class="row g-2 align-items-center">
+        <input type="hidden" name="tab" value="mentors">
+
+        <div class="col-md-5">
+          <input type="text" name="search" class="form-control form-control-sm" placeholder="Search mentor ID, name, email..." value="{{ search }}">
+        </div>
+
+        <div class="col-md-3">
+          <select name="department" class="form-select form-select-sm">
+            <option value="">All Departments</option>
+            {% for d in all_departments %}
+            <option value="{{ d.name }}" {% if department == d.name %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <select name="sort_by" class="form-select form-select-sm">
+            <option value="workload" {% if sort_by == 'workload' %}selected{% endif %}>Sort by Workload Utilization</option>
+            <option value="assigned" {% if sort_by == 'assigned' %}selected{% endif %}>Sort by Total Assigned</option>
+            <option value="turnaround" {% if sort_by == 'turnaround' %}selected{% endif %}>Sort by Turnaround Velocity</option>
+            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort by Name</option>
+          </select>
+        </div>
+
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-sm btn-dark flex-grow-1">Filter</button>
+          <a href="{{ url_for('admin.analytics', tab='mentors') }}" class="btn btn-sm btn-outline-secondary" title="Reset">✕</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Mentors Supervisory Table -->
+    <div class="bg-white rounded-3 border shadow-xs overflow-hidden">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-sm">
+          <thead class="table-light text-xs text-uppercase font-mono">
+            <tr>
+              <th>Mentor ID</th>
+              <th>Mentor Name & Department</th>
+              <th>Mentees Assigned</th>
+              <th>Capacity Saturation</th>
+              <th>Workload Tier</th>
+              <th>Pending Reviews</th>
+              <th>Completed Reviews</th>
+              <th>Avg Turnaround</th>
+              <th>Avg Score Given</th>
+              <th>Cohort Progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in mentors_data %}
+            <tr>
+              <td class="font-mono text-xs font-weight-bold">{{ item.mentor_id }}</td>
+              <td>
+                <div class="font-weight-semibold text-dark">{{ item.full_name }}</div>
+                <div class="text-xs text-muted">{{ item.email }} • {{ item.department }}</div>
+              </td>
+              <td class="font-mono text-xs">
+                <strong>{{ item.total_assigned }}</strong> ({{ item.active_count }} active)
+              </td>
+              <td style="min-width: 140px;">
+                <div class="d-flex align-items-center gap-1.5">
+                  <div class="progress flex-grow-1" style="height: 6px;">
+                    <div class="progress-bar {% if item.utilization_rate > 100 %}bg-danger{% elif item.utilization_rate >= 80 %}bg-warning{% else %}bg-primary{% endif %}" style="width: {{ [item.utilization_rate, 100]|min }}%;"></div>
+                  </div>
+                  <span class="font-mono text-xs">{{ item.total_assigned }}/{{ item.capacity }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge font-mono text-xs {% if item.workload_tier == 'Low Load' %}bg-success-subtle text-success border border-success-subtle{% elif item.workload_tier == 'Balanced' %}bg-primary-subtle text-primary border border-primary-subtle{% elif item.workload_tier == 'At Capacity' %}bg-warning-subtle text-warning border border-warning-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %}">
+                  {{ item.workload_tier }}
+                </span>
+              </td>
+              <td class="font-mono text-xs">
+                <span class="{% if item.pending_reviews > 0 %}text-warning font-weight-bold{% else %}text-muted{% endif %}">
+                  {{ item.pending_reviews }}
+                </span>
+              </td>
+              <td class="font-mono text-xs">{{ item.completed_reviews }}</td>
+              <td class="font-mono text-xs">{{ item.avg_turnaround_hours }}h</td>
+              <td class="font-mono text-xs">
+                {% if item.avg_score_awarded is not none %}
+                  {{ item.avg_score_awarded }}/100
+                {% else %}
+                  <span class="text-muted">N/A</span>
+                {% endif %}
+              </td>
+              <td class="font-mono text-xs font-weight-bold text-success">{{ item.avg_mentee_progress }}%</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="10" class="text-center py-5 text-muted">No faculty mentors match the search criteria.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TAB 4: PROJECT PORTFOLIOS -->
+  {% if tab == 'projects' %}
+  <div class="space-y-4">
+    <!-- Filter Bar -->
+    <div class="p-3 bg-white rounded-3 border shadow-xs">
+      <form method="GET" action="{{ url_for('admin.analytics') }}" class="row g-2 align-items-center">
+        <input type="hidden" name="tab" value="projects">
+
+        <div class="col-md-5">
+          <input type="text" name="search" class="form-control form-control-sm" placeholder="Search project title, domain..." value="{{ search }}">
+        </div>
+
+        <div class="col-md-3">
+          <select name="status" class="form-select form-select-sm">
+            <option value="">All Statuses</option>
+            <option value="active" {% if status == 'active' %}selected{% endif %}>Active Projects</option>
+            <option value="archived" {% if status == 'archived' %}selected{% endif %}>Archived Projects</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <select name="sort_by" class="form-select form-select-sm">
+            <option value="allocated" {% if sort_by == 'allocated' %}selected{% endif %}>Sort by Allocated Interns</option>
+            <option value="progress" {% if sort_by == 'progress' %}selected{% endif %}>Sort by Avg Progress</option>
+            <option value="score" {% if sort_by == 'score' %}selected{% endif %}>Sort by Evaluation Score</option>
+            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Sort by Title</option>
+          </select>
+        </div>
+
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-sm btn-dark flex-grow-1">Filter</button>
+          <a href="{{ url_for('admin.analytics', tab='projects') }}" class="btn btn-sm btn-outline-secondary" title="Reset">✕</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Projects Table -->
+    <div class="bg-white rounded-3 border shadow-xs overflow-hidden">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-sm">
+          <thead class="table-light text-xs text-uppercase font-mono">
+            <tr>
+              <th>Code</th>
+              <th>Project Title</th>
+              <th>Domain</th>
+              <th>Difficulty</th>
+              <th>Interns / Cap</th>
+              <th>Saturation</th>
+              <th>Avg Progress</th>
+              <th>Milestone Velocity</th>
+              <th>On-Time</th>
+              <th class="text-end">Telemetry</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in projects_data %}
+            <tr>
+              <td class="font-mono text-xs font-weight-bold">{{ item.project_code }}</td>
+              <td>
+                <div class="font-weight-semibold text-dark">{{ item.title }}</div>
+                <div class="text-xs text-muted">{{ item.duration_months }} Month Track • {% if item.is_active %}<span class="text-success">Active</span>{% else %}<span class="text-muted">Archived</span>{% endif %}</div>
+              </td>
+              <td><span class="badge bg-light text-dark border font-mono text-xs">{{ item.domain }}</span></td>
+              <td><span class="text-xs font-mono">{{ item.difficulty_level }}</span></td>
+              <td class="font-mono text-xs font-weight-bold">{{ item.allocated_count }}/{{ item.capacity }}</td>
+              <td style="min-width: 120px;">
+                <div class="d-flex align-items-center gap-1.5">
+                  <div class="progress flex-grow-1" style="height: 6px;">
+                    <div class="progress-bar {% if item.capacity_utilization > 90 %}bg-danger{% elif item.capacity_utilization >= 70 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ [item.capacity_utilization, 100]|min }}%;"></div>
+                  </div>
+                  <span class="font-mono text-xs">{{ item.capacity_utilization }}%</span>
+                </div>
+              </td>
+              <td class="font-mono text-xs font-weight-bold text-success">{{ item.avg_progress }}%</td>
+              <td class="font-mono text-xs">{{ item.completed_milestones }}/{{ item.total_milestones }}</td>
+              <td>
+                <span class="badge font-mono text-xs {% if item.on_time_rate >= 80 %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %}">
+                  {{ item.on_time_rate }}%
+                </span>
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('admin.project_analytics_detail', project_id=item.project_id) }}" class="btn btn-xs btn-outline-dark font-mono">
+                  Inspect
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="10" class="text-center py-5 text-muted">No project records match the current filters.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

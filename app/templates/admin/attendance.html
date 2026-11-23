@@ -1,0 +1,312 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Daily Attendance Console — ANTI MATRIX{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="h3 font-weight-black mb-1" style="font-weight: 800; letter-spacing: -0.02em;">
+        Organization Attendance Console
+      </h2>
+      <p class="text-muted small mb-0">
+        Enterprise daily check-in monitoring, administrative regularization, audit modifications, and report generation.
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Date Picker Filter -->
+      <form method="GET" action="{{ url_for('admin.attendance_dashboard') }}" class="d-flex align-items-center gap-2">
+        <input type="date" name="date" value="{{ target_date.strftime('%Y-%m-%d') }}" class="form-control form-control-sm font-mono" onchange="this.form.submit()">
+      </form>
+
+      <!-- Manual Entry Modal Trigger -->
+      <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#manualEntryModal">
+        + Retroactive Entry
+      </button>
+
+      <!-- Export Actions -->
+      <div class="dropdown">
+        <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          Export Report
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li><a class="dropdown-item" href="{{ url_for('admin.export_attendance', format='csv', start_date=target_date, end_date=target_date) }}">Export Day CSV</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('admin.export_attendance', format='pdf', start_date=target_date, end_date=target_date) }}">Export Day PDF</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{{ url_for('admin.export_attendance', format='csv') }}">Full Database (CSV)</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Organization KPI Overview -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+      <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 12px; background: #FFF;">
+        <div class="text-muted small text-uppercase font-weight-bold">Active Interns</div>
+        <div class="h3 font-weight-bold text-dark font-mono mb-0">{{ daily_overview.total_active_interns }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 12px; background: #FFF;">
+        <div class="text-muted small text-uppercase font-weight-bold">Checked In</div>
+        <div class="h3 font-weight-bold text-success font-mono mb-0">{{ daily_overview.checked_in }}</div>
+        <div class="text-muted small">{{ daily_overview.currently_working }} currently active</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 12px; background: #FFF;">
+        <div class="text-muted small text-uppercase font-weight-bold">On-Time Present</div>
+        <div class="h3 font-weight-bold text-success font-mono mb-0">{{ daily_overview.present }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 12px; background: #FFF;">
+        <div class="text-muted small text-uppercase font-weight-bold">Late Arrivals</div>
+        <div class="h3 font-weight-bold text-warning font-mono mb-0">{{ daily_overview.late }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 12px; background: #FFF;">
+        <div class="text-muted small text-uppercase font-weight-bold">On Leave</div>
+        <div class="h3 font-weight-bold text-primary font-mono mb-0">{{ daily_overview.on_leave }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 12px; background: #FFF;">
+        <div class="text-muted small text-uppercase font-weight-bold">Absent</div>
+        <div class="h3 font-weight-bold text-danger font-mono mb-0">{{ daily_overview.absent }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px; background: #FFF;">
+    <div class="card-body p-3">
+      <form method="GET" action="{{ url_for('admin.attendance_dashboard') }}" class="row g-2 align-items-center">
+        <input type="hidden" name="date" value="{{ target_date.strftime('%Y-%m-%d') }}">
+        <div class="col-md-5">
+          <input type="text" name="q" value="{{ search_q }}" placeholder="Search by intern name, AM-INT ID..." class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3">
+          <select name="status" class="form-select form-select-sm">
+            <option value="all" {% if status_filter == 'ALL' %}selected{% endif %}>All Statuses</option>
+            <option value="PRESENT" {% if status_filter == 'PRESENT' %}selected{% endif %}>Present</option>
+            <option value="LATE" {% if status_filter == 'LATE' %}selected{% endif %}>Late</option>
+            <option value="HALF_DAY" {% if status_filter == 'HALF_DAY' %}selected{% endif %}>Half Day</option>
+            <option value="ON_LEAVE" {% if status_filter == 'ON_LEAVE' %}selected{% endif %}>On Leave</option>
+            <option value="ABSENT" {% if status_filter == 'ABSENT' %}selected{% endif %}>Absent</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-sm btn-dark w-100">Filter Records</button>
+        </div>
+        <div class="col-md-2">
+          <a href="{{ url_for('admin.attendance_dashboard', date=target_date.strftime('%Y-%m-%d')) }}" class="btn btn-sm btn-outline-secondary w-100">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Attendance Table -->
+  <div class="card shadow-sm border-0" style="border-radius: 14px; background: #FFF;">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 font-weight-bold" style="font-size: 1rem;">Daily Attendance Records ({{ records|length }})</h5>
+      <span class="text-muted small font-mono">{{ target_date.strftime('%B %d, %Y') }}</span>
+    </div>
+    <div class="card-body p-0">
+      {% if records %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+          <thead class="table-light">
+            <tr class="text-muted text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+              <th class="ps-4">Intern</th>
+              <th>Status</th>
+              <th>Check-In Time</th>
+              <th>Check-Out Time</th>
+              <th>Duration</th>
+              <th>Notes / Regularization</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in records %}
+            {% set s = r.student %}
+            <tr>
+              <td class="ps-4">
+                <div class="font-weight-bold text-dark">{{ s.full_name }}</div>
+                <div class="text-muted small font-mono">{{ s.student_uid }}</div>
+              </td>
+              <td>
+                {% if r.status == 'PRESENT' %}
+                  <span class="badge bg-success">PRESENT</span>
+                {% elif r.status == 'LATE' %}
+                  <span class="badge bg-warning text-dark">LATE</span>
+                {% elif r.status == 'HALF_DAY' %}
+                  <span class="badge bg-warning text-dark">HALF DAY</span>
+                {% elif r.status == 'ON_LEAVE' %}
+                  <span class="badge bg-primary">ON LEAVE</span>
+                {% elif r.status == 'ABSENT' %}
+                  <span class="badge bg-danger">ABSENT</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ r.status }}</span>
+                {% endif %}
+                {% if r.is_corrected %}
+                  <span class="badge bg-info text-dark" title="Adjusted by admin">&#x270E; Corrected</span>
+                {% endif %}
+              </td>
+              <td class="font-mono">
+                {{ r.check_in_time.strftime('%H:%M:%S') if r.check_in_time else '—' }}
+              </td>
+              <td class="font-mono">
+                {{ r.check_out_time.strftime('%H:%M:%S') if r.check_out_time else '—' }}
+              </td>
+              <td class="font-mono font-weight-bold text-success">
+                {{ r.work_duration_formatted if r.work_duration_minutes else '—' }}
+              </td>
+              <td style="max-width: 250px;">
+                <div class="small text-muted">{{ r.check_in_notes or '—' }}</div>
+                {% if r.correction_reason %}
+                  <div class="small text-primary mt-1">
+                    <strong>Audit:</strong> {{ r.correction_reason }}
+                  </div>
+                {% endif %}
+              </td>
+              <td class="text-end pe-4">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openCorrectionModal('{{ r.id }}', '{{ s.full_name }}', '{{ r.status }}', '{{ r.check_in_time.strftime('%H:%M') if r.check_in_time else '' }}', '{{ r.check_out_time.strftime('%H:%M') if r.check_out_time else '' }}')">
+                  Regularize
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <p class="mb-0">No attendance records found for {{ target_date.strftime('%B %d, %Y') }}.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Admin Regularize Modal -->
+<div class="modal fade" id="correctionModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="correctionForm" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold" id="correctionModalTitle">Regularize Attendance</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small">Attendance Status</label>
+            <select name="status" id="modalStatusSelect" class="form-select form-select-sm" required>
+              <option value="PRESENT">PRESENT (Full Day)</option>
+              <option value="LATE">LATE (Grace Exceeded)</option>
+              <option value="HALF_DAY">HALF_DAY (&lt; 4 hrs)</option>
+              <option value="ABSENT">ABSENT</option>
+              <option value="ON_LEAVE">ON_LEAVE</option>
+              <option value="HOLIDAY">HOLIDAY</option>
+            </select>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label font-weight-bold small">Check-In Time</label>
+              <input type="time" name="check_in_time" id="modalCheckInTime" class="form-control form-control-sm">
+            </div>
+            <div class="col-6">
+              <label class="form-label font-weight-bold small">Check-Out Time</label>
+              <input type="time" name="check_out_time" id="modalCheckOutTime" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small text-danger">Mandatory Audit Justification *</label>
+            <textarea name="reason" rows="3" class="form-control form-control-sm" placeholder="Document the reason for this administrative change..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary">Save Regularization</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Manual Retroactive Entry Modal -->
+<div class="modal fade" id="manualEntryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.manual_attendance_entry') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold">Manual Retroactive Entry</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small">Select Intern Candidate *</label>
+            <select name="student_id" class="form-select form-select-sm" required>
+              <option value="">-- Choose Candidate --</option>
+              {% for s in active_students %}
+                <option value="{{ s.id }}">{{ s.full_name }} ({{ s.student_uid }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small">Attendance Date *</label>
+            <input type="date" name="date" value="{{ target_date.strftime('%Y-%m-%d') }}" class="form-control form-control-sm" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small">Status *</label>
+            <select name="status" class="form-select form-select-sm" required>
+              <option value="PRESENT">PRESENT</option>
+              <option value="LATE">LATE</option>
+              <option value="HALF_DAY">HALF_DAY</option>
+              <option value="ON_LEAVE">ON_LEAVE</option>
+              <option value="ABSENT">ABSENT</option>
+            </select>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label font-weight-bold small">Check-In</label>
+              <input type="time" name="check_in_time" value="09:00" class="form-control form-control-sm">
+            </div>
+            <div class="col-6">
+              <label class="form-label font-weight-bold small">Check-Out</label>
+              <input type="time" name="check_out_time" value="17:00" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small text-danger">Mandatory Reason *</label>
+            <textarea name="reason" rows="2" class="form-control form-control-sm" placeholder="Reason for manual retroactive entry..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-success">Create Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openCorrectionModal(recordId, internName, status, checkIn, checkOut) {
+    document.getElementById('correctionModalTitle').innerText = `Regularize Attendance: ${internName}`;
+    document.getElementById('correctionForm').action = `/admin/attendance/${recordId}/correct`;
+    document.getElementById('modalStatusSelect').value = status;
+    document.getElementById('modalCheckInTime').value = checkIn;
+    document.getElementById('modalCheckOutTime').value = checkOut;
+    const modal = new bootstrap.Modal(document.getElementById('correctionModal'));
+    modal.show();
+  }
+</script>
+{% endblock %}

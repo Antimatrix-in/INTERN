@@ -1,0 +1,208 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Executive Report Center | Anti-Matrix Enterprise{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 pb-3 border-bottom" style="border-color: var(--border-light) !important;">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald); font-weight: 700;">
+          EXECUTIVE REPORTING
+        </span>
+        <span class="text-xs text-muted font-mono">Official Datasets & Audits</span>
+      </div>
+      <h1 class="h3 font-weight-bold text-dark mb-1" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">
+        Executive Report Generation Center
+      </h1>
+      <p class="text-sm text-muted mb-0">Generate, customize, and export RFC 4180 compliant CSV files and printable institutional audit reports.</p>
+    </div>
+
+    <div>
+      <a href="{{ url_for('admin.analytics') }}" class="btn btn-sm btn-outline-secondary font-mono text-xs">
+        ← Back to Analytics Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Cards of Available Reports -->
+  <div class="row g-4">
+
+    <!-- 1. Candidate Performance Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="p-4 bg-white rounded-3 border shadow-xs h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="badge bg-primary-subtle text-primary font-mono text-xs">CANDIDATE TELEMETRY</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <h5 class="h6 font-weight-bold text-dark mb-1">Candidate Performance Report</h5>
+          <p class="text-xs text-muted mb-3">
+            Complete intern roster with duration, milestones completed, task completion velocity, on-time rates, and average rubric evaluation scores.
+          </p>
+        </div>
+
+        <div class="pt-3 border-top d-flex gap-2">
+          <a href="{{ url_for('admin.export_csv_report', report_type='interns_performance') }}" class="btn btn-xs btn-outline-dark font-mono flex-grow-1">
+            📥 Export CSV
+          </a>
+          <a href="{{ url_for('admin.printable_report', report_type='interns_performance') }}" target="_blank" class="btn btn-xs btn-light border font-mono">
+            🖨️ Printable
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Faculty Supervisory Report -->
+    <div class="col-md-6 col-lg-4">
+      <div class="p-4 bg-white rounded-3 border shadow-xs h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="badge bg-success-subtle text-success font-mono text-xs">SUPERVISORY AUDIT</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          <h5 class="h6 font-weight-bold text-dark mb-1">Mentor Supervision Report</h5>
+          <p class="text-xs text-muted mb-3">
+            Faculty mentorship workload distribution, capacity tiers, review turnaround times in hours, and average mentee progress metrics.
+          </p>
+        </div>
+
+        <div class="pt-3 border-top d-flex gap-2">
+          <a href="{{ url_for('admin.export_csv_report', report_type='mentors_performance') }}" class="btn btn-xs btn-outline-dark font-mono flex-grow-1">
+            📥 Export CSV
+          </a>
+          <a href="{{ url_for('admin.printable_report', report_type='mentors_performance') }}" target="_blank" class="btn btn-xs btn-light border font-mono">
+            🖨️ Printable
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Project Portfolio Health -->
+    <div class="col-md-6 col-lg-4">
+      <div class="p-4 bg-white rounded-3 border shadow-xs h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="badge bg-info-subtle text-info font-mono text-xs">CURRICULUM PORTFOLIO</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          </div>
+          <h5 class="h6 font-weight-bold text-dark mb-1">Project Portfolio Health</h5>
+          <p class="text-xs text-muted mb-3">
+            Curriculum saturation rates, domain distribution, milestone progression percentages, and deliverable timeliness across all projects.
+          </p>
+        </div>
+
+        <div class="pt-3 border-top d-flex gap-2">
+          <a href="{{ url_for('admin.export_csv_report', report_type='projects_summary') }}" class="btn btn-xs btn-outline-dark font-mono flex-grow-1">
+            📥 Export CSV
+          </a>
+          <a href="{{ url_for('admin.printable_report', report_type='projects_summary') }}" target="_blank" class="btn btn-xs btn-light border font-mono">
+            🖨️ Printable
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Monthly Executive Review -->
+    <div class="col-md-6 col-lg-4">
+      <div class="p-4 bg-white rounded-3 border shadow-xs h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="badge bg-warning-subtle text-warning font-mono text-xs">EXECUTIVE MONTHLY</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </div>
+          <h5 class="h6 font-weight-bold text-dark mb-1">Monthly Organization Review</h5>
+          <p class="text-xs text-muted mb-3">
+            Executive leadership aggregate snapshot covering enrollment, throughput, approval rates, revision percentages, and quality indices.
+          </p>
+        </div>
+
+        <div class="pt-3 border-top d-flex gap-2">
+          <a href="{{ url_for('admin.export_csv_report', report_type='organization_monthly') }}" class="btn btn-xs btn-outline-dark font-mono flex-grow-1">
+            📥 Export CSV
+          </a>
+          <a href="{{ url_for('admin.printable_report', report_type='organization_monthly') }}" target="_blank" class="btn btn-xs btn-light border font-mono">
+            🖨️ Printable
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Completion & Certification Verification -->
+    <div class="col-md-6 col-lg-4">
+      <div class="p-4 bg-white rounded-3 border shadow-xs h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="badge font-mono text-xs" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald);">
+              CERTIFICATION ROSTER
+            </span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+          </div>
+          <h5 class="h6 font-weight-bold text-dark mb-1">Completion Verification Roster</h5>
+          <p class="text-xs text-muted mb-3">
+            Alumni and completed candidate records for certificate issuance audits, final grades, and official credential dispatch.
+          </p>
+        </div>
+
+        <div class="pt-3 border-top d-flex gap-2">
+          <a href="{{ url_for('admin.export_csv_report', report_type='internship_completions') }}" class="btn btn-xs btn-outline-dark font-mono flex-grow-1">
+            📥 Export CSV
+          </a>
+          <a href="{{ url_for('admin.printable_report', report_type='internship_completions') }}" target="_blank" class="btn btn-xs btn-light border font-mono">
+            🖨️ Printable
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Custom Filtered Report Download -->
+  <div class="p-4 bg-white rounded-3 border shadow-xs">
+    <h5 class="h6 font-weight-bold text-dark mb-2">Custom Filtered Dataset Generator</h5>
+    <p class="text-xs text-muted mb-3">Apply institutional filters to download customized candidate or project CSV subsets.</p>
+
+    <form method="GET" action="{{ url_for('admin.export_csv_report') }}" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <label class="form-label text-xs font-weight-medium text-muted mb-1">Report Specification</label>
+        <select name="report_type" class="form-select form-select-sm">
+          <option value="interns_performance">Candidate Performance Dataset</option>
+          <option value="mentors_performance">Faculty Mentors Supervision Dataset</option>
+          <option value="projects_summary">Project Portfolios Dataset</option>
+          <option value="internship_completions">Completion Roster Dataset</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label text-xs font-weight-medium text-muted mb-1">Curriculum Project</label>
+        <select name="project_id" class="form-select form-select-sm">
+          <option value="">All Projects</option>
+          {% for p in all_projects %}
+          <option value="{{ p.id }}">{{ p.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label text-xs font-weight-medium text-muted mb-1">Supervising Mentor</label>
+        <select name="mentor_id" class="form-select form-select-sm">
+          <option value="">All Mentors</option>
+          {% for m in all_mentors %}
+          <option value="{{ m.id }}">{{ m.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label text-xs font-weight-medium text-muted mb-1">&nbsp;</label>
+        <button type="submit" class="btn btn-sm text-white w-100 font-weight-semibold" style="background: var(--brand-emerald); border-color: var(--brand-emerald);">
+          Download Filtered CSV
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

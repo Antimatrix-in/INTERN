@@ -1,0 +1,41 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  {% if priority == 'URGENT' %}
+    <span class="badge badge-urgent">Urgent Announcement</span>
+  {% else %}
+    <span class="badge badge-dark">System Announcement</span>
+  {% endif %}
+</div>
+<h2 class="headline">{{ announcement_title }}</h2>
+<p>Hello <strong>{{ recipient_name|default('Team Member') }}</strong>,</p>
+<p>A new announcement has been published on the Anti-Matrix Portal:</p>
+
+<div class="detail-card" {% if priority == 'URGENT' %}style="border-left-color: #DC2626;"{% endif %}>
+  <table width="100%" cellpadding="4" cellspacing="0">
+    <tr>
+      <td width="35%" style="color:#64748B; font-weight:600; font-size:13px;">Published By:</td>
+      <td style="color:#0F172A; font-weight:600; font-size:13px;">{{ author_name|default('System Administrator') }}</td>
+    </tr>
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Audience:</td>
+      <td style="color:#0F172A; font-size:13px;">{{ target_role|default('All Portal Users') }}</td>
+    </tr>
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Priority:</td>
+      <td style="font-weight:700; font-size:13px; color:{% if priority == 'URGENT' %}#DC2626{% else %}#10B981{% endif %};">
+        {{ priority|default('NORMAL') }}
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:20px; margin:20px 0; font-size:14px; line-height:1.6; color:#0F172A;">
+  {{ announcement_content|safe }}
+</div>
+
+<center>
+  <a href="{{ action_url|default('#') }}" class="cta-button">Open Portal &amp; Acknowledge &rarr;</a>
+</center>
+{% endblock %}

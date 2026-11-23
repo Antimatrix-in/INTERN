@@ -1,393 +1,665 @@
 {% extends 'student/base_student.html' %}
 
 {% block title %}Week {{ milestone.week_number }} — {{ milestone.title }} — ANTI MATRIX{% endblock %}
+{% block breadcrumb_title %}Week {{ milestone.week_number }} Detail{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 2rem;">
-  <a href="{{ url_for('student.dashboard') }}" style="display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; text-decoration: none;">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-    Back to Dashboard
-  </a>
+<div class="workspace-week-detail">
+  <!-- Top Navigation & Back Link -->
+  <div class="week-header-nav">
+    <a href="{{ url_for('student.dashboard') }}" class="back-link" title="Return to Dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Back to Dashboard</span>
+    </a>
+  </div>
 
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <div style="display: flex; gap: 0.65rem; margin-bottom: 0.4rem; align-items: center;">
-        <span class="meta-badge mono" style="background: rgba(0, 210, 255, 0.15); color: var(--primary); border-color: rgba(0, 210, 255, 0.35);">WEEK {{ milestone.week_number }}</span>
+  <!-- Week Title Bar & Primary Status -->
+  <header class="week-main-header">
+    <div class="week-title-meta-col">
+      <div class="week-badge-row">
+        <span class="meta-badge mono badge-week-highlight">WEEK {{ milestone.week_number }}</span>
         <span class="meta-badge mono">{{ assignment.project.project_code }}</span>
         {% if milestone.due_at %}
-          <span class="meta-badge mono" style="color: {% if milestone.is_overdue %}#EF4444{% else %}#94A3B8{% endif %};">
+          <span class="meta-badge mono {% if milestone.is_overdue %}badge-overdue{% endif %}">
             Deadline: {{ milestone.due_at.strftime('%d %b %Y') }}
           </span>
         {% endif %}
       </div>
-      <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.35rem; color: #F8FAFC;">
+      <h1 class="week-headline">
         {{ milestone.title }}
       </h1>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">
-        Project: <strong style="color: var(--text-main);">{{ assignment.project.title }}</strong>
+      <p class="week-project-subtitle">
+        Project: <strong class="project-name-strong">{{ assignment.project.title }}</strong>
       </p>
     </div>
 
-    <div>
+    <div class="week-status-badge-col">
       {% set disp_status = milestone.display_status %}
-      {% if disp_status == 'COMPLETED' %}
-        <span class="status-badge badge-completed" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+      {% if disp_status == 'COMPLETED' or milestone.status in ['COMPLETED', 'APPROVED'] %}
+        <span class="status-badge badge-completed">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           ✓ COMPLETED & APPROVED
         </span>
-      {% elif disp_status == 'UNDER_REVIEW' %}
-        <span class="status-badge badge-submitted" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+      {% elif disp_status == 'UNDER_REVIEW' or milestone.status in ['SUBMITTED', 'UNDER_REVIEW'] %}
+        <span class="status-badge badge-submitted">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           UNDER REVIEW
         </span>
-      {% elif disp_status == 'REDO_REQUIRED' %}
-        <span class="status-badge badge-revision" style="font-size: 0.85rem; padding: 0.4rem 1rem; background: rgba(239, 68, 68, 0.15); color: #EF4444; border-color: rgba(239, 68, 68, 0.3);">
+      {% elif disp_status == 'REDO_REQUIRED' or milestone.status in ['REVISION_REQUIRED', 'REDO_REQUIRED'] %}
+        <span class="status-badge badge-revision">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
           REDO REQUIRED
         </span>
       {% elif disp_status == 'OVERDUE' %}
-        <span class="status-badge badge-revision" style="font-size: 0.85rem; padding: 0.4rem 1rem; background: rgba(245, 158, 11, 0.15); color: #F59E0B; border-color: rgba(245, 158, 11, 0.3);">
+        <span class="status-badge badge-revision">
           ⚠ OVERDUE
         </span>
       {% elif disp_status == 'AVAILABLE' or disp_status == 'IN_PROGRESS' %}
-        <span class="status-badge badge-available" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+        <span class="status-badge badge-available">
           IN PROGRESS / AVAILABLE
         </span>
       {% else %}
-        <span class="status-badge badge-locked" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+        <span class="status-badge badge-locked">
           🔒 LOCKED
         </span>
       {% endif %}
     </div>
-  </div>
-</div>
+  </header>
 
-{% if milestone.status == 'LOCKED' %}
-<!-- Locked Milestone Screen -->
-<div class="card" style="text-align: center; padding: 4rem 2rem;">
-  <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--bg-surface-elevated); border: 1px dashed var(--border-medium); display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); margin-bottom: 1.5rem;">
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-  </div>
-  <h2 style="font-size: 1.45rem; font-weight: 700; margin-bottom: 0.75rem; color: #F8FAFC;">This Week is Currently Locked</h2>
-  <p style="color: var(--text-muted); max-width: 540px; margin: 0 auto 2rem; line-height: 1.6;">
-    Milestones unlock sequentially upon administrator evaluation. Complete and get approval for Week {{ milestone.week_number - 1 }} to unlock this week.
-  </p>
-  <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary">
-    Return to Dashboard
-  </a>
-</div>
-{% else %}
-
-<!-- REDO REQUIRED Alert Banner if applicable -->
-{% if milestone.status == 'REDO_REQUIRED' %}
-<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
-  <div style="display: flex; gap: 1rem; align-items: flex-start;">
-    <div style="color: #EF4444; flex-shrink: 0; margin-top: 0.15rem;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+  {% if milestone.status == 'LOCKED' %}
+  <!-- Locked Milestone Screen (Sequential Security Gating) -->
+  <section class="card locked-milestone-card" aria-label="Locked Week Notice">
+    <div class="locked-icon-wrapper" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
     </div>
-    <div style="flex: 1;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-        <h4 style="font-size: 1.05rem; font-weight: 800; color: #EF4444; margin: 0;">
+    <h2 class="locked-heading">This Week is Currently Locked</h2>
+    <p class="locked-desc">
+      Milestones unlock sequentially upon administrator and technical mentor evaluation. Complete all tasks and obtain verification for Week {{ milestone.week_number - 1 }} to unlock this workspace.
+    </p>
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary">
+      Return to Dashboard
+    </a>
+  </section>
+  {% else %}
+
+  <!-- REDO REQUIRED Alert Banner (Prominent Mentor Guidance) -->
+  {% if milestone.status in ['REDO_REQUIRED', 'REVISION_REQUIRED'] %}
+  <section class="redo-alert-banner" aria-label="Mentor Revision Required Notice">
+    <div class="redo-alert-icon" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+    <div class="redo-alert-body">
+      <div class="redo-alert-header">
+        <h3 class="redo-alert-title">
           REDO REQUIRED: Mentor Evaluation Feedback
-        </h4>
-        <span class="status-badge" style="background: rgba(239, 68, 68, 0.2); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.4);">Action Required</span>
+        </h3>
+        <span class="status-badge badge-revision">Action Required</span>
       </div>
-      <p style="color: #F8FAFC; font-size: 0.95rem; line-height: 1.5; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">
+      <div class="redo-feedback-box">
         "{{ milestone.admin_notes or (latest_submission.review_feedback if latest_submission else 'Please address mentor recommendations and submit an updated demonstration and repository.') }}"
-      </p>
-      <p style="font-size: 0.85rem; color: #CBD5E1; margin: 0;">
+      </div>
+      <p class="redo-instructions">
         Please review the feedback above, update your implementation, update your Google Drive demo video or GitHub repository, and submit below.
       </p>
     </div>
-  </div>
-</div>
-{% elif milestone.admin_notes and milestone.status in ['COMPLETED', 'APPROVED'] %}
-<!-- Completed Review Notes Banner -->
-<div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; gap: 1rem; align-items: flex-start;">
-  <div style="color: var(--primary-light); flex-shrink: 0; margin-top: 0.15rem;">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-  </div>
-  <div>
-    <h4 style="font-size: 0.925rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem;">
-      Admin Verification Remarks
-    </h4>
-    <p style="color: var(--text-muted); font-size: 0.885rem; line-height: 1.5;">
-      {{ milestone.admin_notes }}
-    </p>
-  </div>
-</div>
-{% endif %}
-
-<div class="grid-3">
-  <!-- Left 2 Columns: Objective, Checklist, Instructions, Submission Form -->
-  <div style="grid-column: span 2; display: flex; flex-direction: column; gap: 1.75rem;">
-    <!-- Objective Card -->
-    <div class="card" style="margin-bottom: 0;">
-      <h3 class="card-title" style="margin-bottom: 0.85rem; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        Week Objective
+  </section>
+  {% elif milestone.admin_notes and milestone.status in ['COMPLETED', 'APPROVED'] %}
+  <!-- Completed Review Notes Banner -->
+  <section class="approved-remarks-banner" aria-label="Mentor Verification Remarks">
+    <div class="approved-icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    </div>
+    <div class="approved-body">
+      <h3 class="approved-title">
+        Admin Verification Remarks
       </h3>
-      <p style="color: var(--text-main); font-size: 0.95rem; line-height: 1.65;">
-        {{ milestone.objective }}
+      <p class="approved-notes">
+        {{ milestone.admin_notes }}
       </p>
     </div>
+  </section>
+  {% endif %}
 
-    <!-- Task Checklist Card -->
-    <div class="card" style="margin-bottom: 0;">
-      <div class="card-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-        <div>
-          <h3 class="card-title" style="font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-            Task Checklist ({{ milestone.completed_tasks_count }} / {{ milestone.total_tasks_count }} Completed)
-          </h3>
-          <p style="color: var(--text-muted); font-size: 0.825rem; margin-top: 0.2rem;">
-            Check off each task as you complete it. All required tasks must be completed before submission is permitted.
-          </p>
-        </div>
-
-        <span id="task-progress-badge" class="meta-badge mono" style="color: {% if milestone.all_tasks_completed %}var(--primary){% else %}#F59E0B{% endif %};">
-          {% if milestone.all_tasks_completed %}✓ ALL TASKS DONE{% else %}{{ milestone.completed_tasks_count }}/{{ milestone.total_tasks_count }} TASKS{% endif %}
-        </span>
-      </div>
-
-      <ul class="task-checklist" style="list-style: none; padding: 0; margin: 1rem 0 0 0; display: flex; flex-direction: column; gap: 0.75rem;">
-        {% for task in tasks %}
-          <li class="task-item {% if task.is_completed %}task-completed{% endif %}" style="display: flex; align-items: center; padding: 0.85rem 1rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); transition: all 0.2s ease;">
-            <form method="POST" action="{{ url_for('student.toggle_task', milestone_id=milestone.id, task_id=task.id) }}" class="task-toggle-form" style="display: flex; align-items: center; width: 100%; gap: 0.85rem;">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="checkbox" id="task-chk-{{ task.id }}" class="task-checkbox" {% if task.is_completed %}checked{% endif %} {% if milestone.status in ['COMPLETED', 'APPROVED'] %}disabled{% endif %} style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
-              <label for="task-chk-{{ task.id }}" class="task-text" style="color: var(--text-main); font-size: 0.925rem; cursor: pointer; flex: 1; margin: 0; {% if task.is_completed %}text-decoration: line-through; opacity: 0.7;{% endif %}">
-                {{ task.task_text }}
-              </label>
-              {% if task.is_completed %}
-                <span style="font-size: 0.75rem; color: var(--primary); font-weight: 700; background: rgba(0, 210, 255, 0.1); padding: 0.15rem 0.5rem; border-radius: 9999px;">✓ DONE</span>
-              {% endif %}
-            </form>
-          </li>
-        {% else %}
-          <li style="color: var(--text-muted); font-size: 0.875rem; padding: 1rem;">No tasks defined for this week.</li>
-        {% endfor %}
-      </ul>
-    </div>
-
-    <!-- Instructions Card -->
-    {% if milestone.instructions %}
-    <div class="card" style="margin-bottom: 0;">
-      <h3 class="card-title" style="margin-bottom: 0.85rem; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-        Instructions & Technical Details
-      </h3>
-      <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.65; white-space: pre-line;">
-        {{ milestone.instructions }}
-      </p>
-    </div>
-    {% endif %}
-
-    <!-- Submission Panel -->
-    <div class="card" style="margin-bottom: 0; border-color: rgba(16, 185, 129, 0.3);">
-      <div class="card-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-        <div>
-          <h3 class="card-title" style="font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-            SUBMIT WEEK FOR VERIFICATION
-          </h3>
-          <p style="color: var(--text-muted); font-size: 0.825rem; margin-top: 0.2rem;">
-            Provide your Demo Video Google Drive Link and GitHub Repository URL.
-          </p>
-        </div>
-
-        {% if milestone.status in ['COMPLETED', 'APPROVED'] %}
-          <span class="status-badge badge-completed">✓ VERIFIED & COMPLETED</span>
-        {% elif milestone.status == 'UNDER_REVIEW' or milestone.status == 'SUBMITTED' %}
-          <span class="status-badge badge-submitted">AWAITING EVALUATION</span>
-        {% elif milestone.status == 'REDO_REQUIRED' %}
-          <span class="status-badge badge-revision">RESUBMISSION OPEN</span>
-        {% endif %}
-      </div>
-
-      <div style="padding-top: 1.25rem;">
-        {% if milestone.status in ['COMPLETED', 'APPROVED'] %}
-          <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
-            <div style="color: var(--primary); margin-bottom: 0.5rem;">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            </div>
-            <h4 style="color: #F8FAFC; font-weight: 700;">Week {{ milestone.week_number }} Completed & Approved</h4>
-            <p style="font-size: 0.875rem; margin-top: 0.25rem;">All requirements have been successfully verified by your technical mentor.</p>
+  <!-- 2-Column Detail Layout (Workspace Grid) -->
+  <div class="week-detail-grid">
+    <!-- Left Column: Objective, Checklist, Instructions, Deliverables, Submission Form -->
+    <div class="week-primary-col">
+      <!-- 1. Week Objective Card -->
+      <section class="card week-card-section" aria-labelledby="objectiveHeading">
+        <div class="card-section-header">
+          <div class="section-icon-pill" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
           </div>
-        {% elif milestone.status in ['UNDER_REVIEW', 'SUBMITTED'] %}
-          <div style="text-align: center; padding: 2rem 1rem; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: var(--radius-md);">
-            <div style="color: #06B6D4; margin-bottom: 0.5rem;">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <h2 id="objectiveHeading" class="card-section-title">
+            Week Objective
+          </h2>
+        </div>
+        <p class="week-objective-text">
+          {{ milestone.objective }}
+        </p>
+      </section>
+
+      <!-- 2. Task Checklist Card (Interactive AJAX toggle) -->
+      <section class="card week-card-section" aria-labelledby="checklistHeading">
+        <div class="checklist-header">
+          <div>
+            <div class="card-section-header-compact">
+              <div class="section-icon-pill" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+              </div>
+              <h2 id="checklistHeading" class="card-section-title">
+                Task Checklist ({{ milestone.completed_tasks_count }} / {{ milestone.total_tasks_count }} Completed)
+              </h2>
             </div>
-            <h4 style="color: #F8FAFC; font-weight: 700; margin-bottom: 0.35rem;">Submission Currently Under Review</h4>
-            <p style="font-size: 0.875rem; color: var(--text-muted); max-width: 480px; margin: 0 auto;">
-              Your deliverables are queued for technical review. You will receive notification as soon as the mentor completes evaluation.
+            <p class="checklist-subtext">
+              Check off each task as you complete it. All required tasks must be completed before submission is permitted.
             </p>
           </div>
-        {% else %}
-          <!-- Active or Redo Submission Form -->
-          {% if not milestone.all_tasks_completed %}
-            <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <div style="font-size: 0.875rem; color: #F8FAFC;">
-                <strong>Complete all required tasks before submitting your work.</strong>
-                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.15rem 0 0 0;">Please check off each item in the task checklist above once executed.</p>
-              </div>
-            </div>
-          {% endif %}
 
-          <form method="POST" action="{{ url_for('student.submit_milestone', milestone_id=milestone.id) }}" id="milestone-submission-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-            <!-- Demo Video Google Drive Link -->
-            <div class="form-group" style="margin-bottom: 1.25rem;">
-              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; font-weight: 700;">
-                <span>DEMO VIDEO — GOOGLE DRIVE LINK *</span>
-              </label>
-              <input type="url" name="demo_video_url" id="demo_video_url" class="form-control" placeholder="https://drive.google.com/file/d/.../view" {% if not milestone.all_tasks_completed %}disabled{% endif %} required value="{{ latest_submission.demo_video_url if latest_submission and latest_submission.demo_video_url and (latest_submission.demo_video_url.startswith('http') or 'drive.google.com' in latest_submission.demo_video_url) else '' }}">
-              <span class="form-hint" style="font-size: 0.775rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">
-                Upload your demo video to Google Drive, set access to &ldquo;Anyone with the link &rarr; Viewer&rdquo;, and paste the link here.
-              </span>
-            </div>
-
-            <!-- GitHub Repository URL -->
-            <div class="form-group" style="margin-bottom: 1.25rem;">
-              <label class="form-label" style="font-weight: 700;">
-                GITHUB REPOSITORY URL *
-              </label>
-              <input type="url" name="github_url" class="form-control" placeholder="https://github.com/your-username/project-repository" {% if not milestone.all_tasks_completed %}disabled{% endif %} required value="{{ latest_submission.github_url if latest_submission else '' }}">
-              <span class="form-hint" style="font-size: 0.775rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">
-                Ensure your repository is accessible and contains all weekly commits.
-              </span>
-            </div>
-
-            <!-- Notes / Summary -->
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label class="form-label">
-                SUBMISSION NOTES & IMPLEMENTATION SUMMARY
-              </label>
-              <textarea name="submission_notes" class="form-control" rows="3" placeholder="Briefly describe what you built, architecture decisions, and any challenges overcome..." {% if not milestone.all_tasks_completed %}disabled{% endif %}></textarea>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary btn-block" {% if not milestone.all_tasks_completed %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              {% if milestone.status == 'REDO_REQUIRED' %}
-                RESUBMIT FOR VERIFICATION
-              {% else %}
-                SUBMIT FOR VERIFICATION
-              {% endif %}
-            </button>
-          </form>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <!-- Right Column: Week Summary & Submission History -->
-  <div style="display: flex; flex-direction: column; gap: 1.75rem;">
-    <!-- Week Metadata Card -->
-    <div class="card" style="margin-bottom: 0;">
-      <h3 class="card-title" style="font-size: 1.05rem; margin-bottom: 1rem;">
-        Week Summary
-      </h3>
-      <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.85rem;">
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.4rem;">
-          <span style="color: var(--text-muted);">Week Number:</span>
-          <strong style="color: var(--text-main);">Week {{ milestone.week_number }}</strong>
-        </div>
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.4rem;">
-          <span style="color: var(--text-muted);">Status:</span>
-          <strong style="color: var(--primary-light);">{{ milestone.display_status }}</strong>
-        </div>
-        {% if milestone.due_at %}
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.4rem;">
-          <span style="color: var(--text-muted);">Deadline:</span>
-          <span class="mono" style="color: {% if milestone.is_overdue %}#EF4444{% else %}#94A3B8{% endif %}; font-weight: 600;">
-            {{ milestone.due_at.strftime('%d %b %Y') }}
+          <span id="task-progress-badge" class="meta-badge mono {% if milestone.all_tasks_completed %}badge-tasks-done{% else %}badge-tasks-pending{% endif %}">
+            {% if milestone.all_tasks_completed %}✓ ALL TASKS DONE{% else %}{{ milestone.completed_tasks_count }}/{{ milestone.total_tasks_count }} TASKS{% endif %}
           </span>
         </div>
-        {% endif %}
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.4rem;">
-          <span style="color: var(--text-muted);">Tasks:</span>
-          <strong style="color: var(--text-main);">{{ milestone.completed_tasks_count }} / {{ milestone.total_tasks_count }}</strong>
+
+        <ul class="task-checklist" role="list">
+          {% for task in tasks %}
+            <li class="task-item {% if task.is_completed %}task-completed{% endif %}">
+              <form method="POST" action="{{ url_for('student.toggle_task', milestone_id=milestone.id, task_id=task.id) }}" class="task-toggle-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label class="task-checkbox-container">
+                  <input type="checkbox" id="task-chk-{{ task.id }}" class="task-checkbox" {% if task.is_completed %}checked{% endif %} {% if milestone.status in ['COMPLETED', 'APPROVED'] %}disabled{% endif %} aria-label="{{ task.task_text }}">
+                  <span class="custom-check-box" aria-hidden="true"></span>
+                </label>
+                <label for="task-chk-{{ task.id }}" class="task-text">
+                  {{ task.task_text }}
+                </label>
+                {% if task.is_completed %}
+                  <span class="task-done-badge">✓ DONE</span>
+                {% endif %}
+                <a href="{{ url_for('student.task_detail', milestone_id=milestone.id, task_id=task.id) }}" class="btn-task-detail" style="font-size: 0.75rem; color: var(--brand-emerald); text-decoration: none; margin-left: auto; font-weight: 600;" title="View Task Details">
+                  Details &rarr;
+                </a>
+              </form>
+            </li>
+          {% else %}
+            <li class="task-empty-state">No tasks defined for this week.</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Technical Requirements (Phase 2 Module 5) -->
+      {% if milestone.technical_requirements %}
+      <section class="card week-card-section" aria-labelledby="techReqHeading">
+        <div class="card-section-header">
+          <div class="section-icon-pill" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
+          <h2 id="techReqHeading" class="card-section-title">
+            Technical Requirements & Architecture Standards
+          </h2>
         </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span style="color: var(--text-muted);">Submissions:</span>
-          <strong style="color: var(--text-main);">{{ submissions|length }}</strong>
+        <div class="instructions-content-body" style="white-space: pre-wrap; font-family: inherit;">
+          {{ milestone.technical_requirements }}
         </div>
-      </div>
+      </section>
+      {% endif %}
+
+      <!-- 3. Instructions & Technical Details Card -->
+      {% if milestone.instructions %}
+      <section class="card week-card-section" aria-labelledby="instructionsHeading">
+        <div class="card-section-header">
+          <div class="section-icon-pill" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+          </div>
+          <h2 id="instructionsHeading" class="card-section-title">
+            Instructions & Technical Details
+          </h2>
+        </div>
+        <div class="instructions-content-body">
+          {{ milestone.instructions }}
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- 4. Deliverables Checklist Card (if present) -->
+      {% if milestone.deliverables and milestone.deliverables|length > 0 %}
+      <section class="card week-card-section" aria-labelledby="deliverablesHeading">
+        <div class="card-section-header">
+          <div class="section-icon-pill" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+          </div>
+          <h2 id="deliverablesHeading" class="card-section-title">
+            Required Deliverables
+          </h2>
+        </div>
+        <ul class="deliverables-list">
+          {% for item in milestone.deliverables %}
+            <li class="deliverable-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>{{ item }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      <!-- 5. Premium Submission Experience Panel -->
+      <section class="card submission-card-panel" aria-labelledby="submissionHeading">
+        <div class="submission-panel-header">
+          <div>
+            <div class="card-section-header-compact">
+              <div class="section-icon-pill" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <h2 id="submissionHeading" class="card-section-title">
+                SUBMIT WEEK FOR VERIFICATION
+              </h2>
+            </div>
+            <p class="submission-panel-subtitle">
+              Provide your Demo Video Google Drive Link and GitHub Repository URL.
+            </p>
+          </div>
+
+          <div>
+            {% if milestone.status in ['COMPLETED', 'APPROVED'] %}
+              <span class="status-badge badge-completed">✓ VERIFIED & COMPLETED</span>
+            {% elif milestone.status == 'UNDER_REVIEW' or milestone.status == 'SUBMITTED' %}
+              <span class="status-badge badge-submitted">AWAITING EVALUATION</span>
+            {% elif milestone.status in ['REDO_REQUIRED', 'REVISION_REQUIRED'] %}
+              <span class="status-badge badge-revision">RESUBMISSION OPEN</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="submission-panel-body">
+          {% if milestone.status in ['COMPLETED', 'APPROVED'] %}
+            <!-- Milestone Completed Success Box -->
+            <div class="submission-success-state">
+              <div class="success-icon-large" aria-hidden="true">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <h3 class="success-title">Week {{ milestone.week_number }} Completed & Approved</h3>
+              <p class="success-desc">
+                All deliverables and implementation requirements have been verified and approved by your mentor.
+              </p>
+            </div>
+          {% elif milestone.status in ['UNDER_REVIEW', 'SUBMITTED'] %}
+            <!-- Milestone Under Review State Box -->
+            <div class="submission-review-state">
+              <div class="review-icon-large" aria-hidden="true">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <h3 class="review-title">Submission Currently Under Review</h3>
+              <p class="review-desc">
+                Your deliverables are queued in the evaluation pipeline. You will be notified as soon as technical mentor feedback is published.
+              </p>
+            </div>
+          {% else %}
+            <!-- Active / Redo Submission Form -->
+            {% if not milestone.all_tasks_completed %}
+              <div class="tasks-incomplete-warning" role="alert">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="warning-icon" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div class="warning-content">
+                  <strong>Complete all required tasks before submitting your work.</strong>
+                  <p>Please check off each item in the task checklist above once executed.</p>
+                </div>
+              </div>
+            {% endif %}
+
+            <!-- Helpful Google Drive Video Sharing Guidance -->
+            <div class="gdrive-sharing-card">
+              <div class="gdrive-card-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span class="gdrive-guide-title">How to Share Your Demo Video:</span>
+              </div>
+              <ol class="gdrive-steps-list">
+                <li>Upload your screen-recorded demo video (MP4/WebM) to <strong>Google Drive</strong>.</li>
+                <li>Right-click the video &rarr; select <strong>Share</strong> &rarr; change General Access to <strong>&ldquo;Anyone with the link &rarr; Viewer&rdquo;</strong>.</li>
+                <li>Click <strong>Copy Link</strong> and paste the URL in the field below.</li>
+              </ol>
+            </div>
+
+            <!-- Submission Form -->
+            <form method="POST" action="{{ url_for('student.submit_milestone', milestone_id=milestone.id) }}" id="milestone-submission-form" class="submission-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+              <!-- 01. Demo Video Google Drive Link -->
+              <div class="form-group">
+                <label for="demo_video_url" class="form-label form-label-required">
+                  <span>DEMO VIDEO — GOOGLE DRIVE LINK *</span>
+                </label>
+                <div class="input-with-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="input-icon" aria-hidden="true">
+                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                  </svg>
+                  <input type="url"
+                         name="demo_video_url"
+                         id="demo_video_url"
+                         class="form-control"
+                         placeholder="https://drive.google.com/file/d/.../view"
+                         {% if not milestone.all_tasks_completed %}disabled{% endif %}
+                         required
+                         value="{{ latest_submission.demo_video_url if latest_submission and latest_submission.demo_video_url and (latest_submission.demo_video_url.startswith('http') or 'drive.google.com' in latest_submission.demo_video_url) else '' }}">
+                </div>
+                <span class="form-hint">
+                  Upload your demo video to Google Drive, set access to &ldquo;Anyone with the link &rarr; Viewer&rdquo;, and paste the link here.
+                </span>
+              </div>
+
+              <!-- 02. GitHub Repository URL -->
+              <div class="form-group">
+                <label for="github_url" class="form-label form-label-required">
+                  <span>GITHUB REPOSITORY URL *</span>
+                </label>
+                <div class="input-with-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="input-icon" aria-hidden="true">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                  </svg>
+                  <input type="url"
+                         name="github_url"
+                         id="github_url"
+                         class="form-control"
+                         placeholder="https://github.com/your-username/project-repository"
+                         {% if not milestone.all_tasks_completed %}disabled{% endif %}
+                         required
+                         value="{{ latest_submission.github_url if latest_submission else '' }}">
+                </div>
+                <span class="form-hint">
+                  Ensure your repository is accessible and contains all weekly commits.
+                </span>
+              </div>
+
+              <!-- 03. Implementation Summary -->
+              <div class="form-group">
+                <label for="implementation_summary" class="form-label form-label-required">
+                  <span>IMPLEMENTATION SUMMARY *</span>
+                </label>
+                <textarea name="implementation_summary"
+                          id="implementation_summary"
+                          class="form-control"
+                          rows="4"
+                          placeholder="Summarize the core technical implementation: modules developed, architecture decisions, tools used, and functional outputs achieved..."
+                          {% if not milestone.all_tasks_completed %}disabled{% endif %}
+                          required>{{ latest_submission.implementation_summary if (milestone.status in ['REDO_REQUIRED', 'REVISION_REQUIRED'] and latest_submission) else '' }}</textarea>
+                <span class="form-hint">
+                  Provide an architectural overview of what was developed for your technical mentor.
+                </span>
+              </div>
+
+              <!-- 04. Additional Submission Notes -->
+              <div class="form-group">
+                <label for="submission_notes" class="form-label">
+                  <span>ADDITIONAL SUBMISSION NOTES & CHALLENGES (OPTIONAL)</span>
+                </label>
+                <textarea name="submission_notes"
+                          id="submission_notes"
+                          class="form-control"
+                          rows="3"
+                          placeholder="Any specific roadblocks encountered, dependencies configured, or notes for the reviewer..."
+                          {% if not milestone.all_tasks_completed %}disabled{% endif %}>{{ latest_submission.submission_notes if (milestone.status in ['REDO_REQUIRED', 'REVISION_REQUIRED'] and latest_submission) else '' }}</textarea>
+                <span class="form-hint">
+                  Optional notes or context for your technical evaluator.
+                </span>
+              </div>
+
+              <!-- Submit Action Button -->
+              <div class="submission-action-wrapper">
+                <button type="submit"
+                        class="btn btn-primary btn-block submit-verification-btn"
+                        {% if not milestone.all_tasks_completed %}disabled{% endif %}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>
+                    {% if milestone.status in ['REDO_REQUIRED', 'REVISION_REQUIRED'] %}
+                      RESUBMIT FOR VERIFICATION
+                    {% else %}
+                      SUBMIT FOR VERIFICATION
+                    {% endif %}
+                  </span>
+                </button>
+              </div>
+            </form>
+          {% endif %}
+        </div>
+      </section>
     </div>
 
-    <!-- Submission History Card -->
-    <div class="card" style="margin-bottom: 0;">
-      <h3 class="card-title" style="font-size: 1.05rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-        Submission History
-      </h3>
+    <!-- Right Column: Week Snapshot, Assigned Mentor, Submission History -->
+    <aside class="week-secondary-col" aria-label="Milestone Information & History">
+      <!-- 1. Week Summary Card -->
+      <section class="card week-sidebar-card" aria-labelledby="summaryHeading">
+        <h3 id="summaryHeading" class="card-sidebar-title">
+          Week Summary
+        </h3>
+        <dl class="week-meta-list">
+          <div class="week-meta-item">
+            <dt>Week Number:</dt>
+            <dd><strong>Week {{ milestone.week_number }}</strong></dd>
+          </div>
+          <div class="week-meta-item">
+            <dt>Status:</dt>
+            <dd><strong class="status-highlight">{{ milestone.display_status }}</strong></dd>
+          </div>
+          {% if milestone.due_at %}
+          <div class="week-meta-item">
+            <dt>Deadline:</dt>
+            <dd class="mono {% if milestone.is_overdue %}text-danger{% endif %}">
+              {{ milestone.due_at.strftime('%d %b %Y') }}
+            </dd>
+          </div>
+          {% endif %}
+          <div class="week-meta-item">
+            <dt>Tasks:</dt>
+            <dd><strong>{{ milestone.completed_tasks_count }} / {{ milestone.total_tasks_count }}</strong></dd>
+          </div>
+          <div class="week-meta-item">
+            <dt>Submissions:</dt>
+            <dd><strong>{{ submissions|length }}</strong></dd>
+          </div>
+        </dl>
+      </section>
 
-      {% if submissions %}
-        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-          {% for sub in submissions %}
-            <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.85rem; font-size: 0.825rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                <span style="font-weight: 700; color: var(--text-main);">Submission #{{ loop.revindex }}</span>
-                {% if sub.status in ['COMPLETED', 'APPROVED'] %}
-                  <span class="status-badge badge-completed" style="font-size: 0.7rem; padding: 0.15rem 0.45rem;">Approved</span>
-                {% elif sub.status == 'REDO_REQUIRED' %}
-                  <span class="status-badge badge-revision" style="font-size: 0.7rem; padding: 0.15rem 0.45rem;">Redo Req.</span>
-                {% else %}
-                  <span class="status-badge badge-submitted" style="font-size: 0.7rem; padding: 0.15rem 0.45rem;">Under Review</span>
-                {% endif %}
-              </div>
+      <!-- Evaluation Rubric Criteria Card (Phase 2 Module 5) -->
+      {% if rubric %}
+      <section class="card week-sidebar-card" aria-labelledby="rubricHeading">
+        <div class="card-sidebar-header">
+          <h3 id="rubricHeading" class="card-sidebar-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span>Evaluation Rubric</span>
+          </h3>
+          <span class="mono history-count-pill" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald);">100%</span>
+        </div>
+        <div class="p-3 text-xs space-y-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Technical Implementation</span>
+            <strong class="font-mono text-dark">{{ rubric.weight_technical }}%</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Code Quality & Standards</span>
+            <strong class="font-mono text-dark">{{ rubric.weight_code_quality }}%</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Functionality & Features</span>
+            <strong class="font-mono text-dark">{{ rubric.weight_functionality }}%</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Documentation & Specs</span>
+            <strong class="font-mono text-dark">{{ rubric.weight_documentation }}%</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Presentation & Demo Video</span>
+            <strong class="font-mono text-dark">{{ rubric.weight_presentation }}%</strong>
+          </div>
+        </div>
+      </section>
+      {% endif %}
 
-              <div style="color: var(--text-subtle); font-size: 0.75rem; margin-bottom: 0.4rem;">
-                {{ sub.submitted_at.strftime('%d %b %Y, %H:%M') if sub.submitted_at else 'Submitted' }}
-              </div>
+      <!-- 2. Technical Mentor Guidance Card -->
+      <section class="card week-sidebar-card" aria-labelledby="mentorHeading">
+        <h3 id="mentorHeading" class="card-sidebar-title">
+          Technical Mentor
+        </h3>
+        <div class="mentor-sidebar-widget">
+          <div class="mentor-avatar-badge" aria-hidden="true">
+            {{ internship.assigned_mentor_name[:1] if internship and internship.assigned_mentor_name else 'M' }}
+          </div>
+          <div class="mentor-details">
+            <h4 class="mentor-name">
+              {{ internship.assigned_mentor_name or 'Mentor Pending' }}
+            </h4>
+            {% if internship and internship.assigned_mentor_email %}
+              <a href="mailto:{{ internship.assigned_mentor_email }}" class="mentor-email-link mono">
+                {{ internship.assigned_mentor_email }}
+              </a>
+            {% else %}
+              <span class="mentor-unassigned">Official evaluation mentor will be allocated</span>
+            {% endif %}
+          </div>
+        </div>
+      </section>
 
-              {% if sub.github_url or sub.repo_url %}
-                <div style="margin-bottom: 0.3rem;">
-                  <a href="{{ sub.github_url or sub.repo_url }}" target="_blank" rel="noopener noreferrer" style="color: #60A5FA; text-decoration: none; word-break: break-all;">
-                    🔗 {{ (sub.github_url or sub.repo_url)[:35] }}...
-                  </a>
-                </div>
-              {% endif %}
+      <!-- 3. Submission History Audit Log Card -->
+      <section class="card week-sidebar-card" aria-labelledby="historyHeading">
+        <div class="card-sidebar-header">
+          <h3 id="historyHeading" class="card-sidebar-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>Submission History</span>
+          </h3>
+          <span class="mono history-count-pill">{{ submissions|length }}</span>
+        </div>
 
-              {% if sub.demo_video_url or sub.demo_video_path or sub.file_path %}
-                <div style="margin-bottom: 0.3rem;">
-                  {% if sub.demo_video_url and (sub.demo_video_url.startswith('http') or 'drive.google.com' in sub.demo_video_url) %}
-                    <a href="{{ sub.demo_video_url }}" target="_blank" rel="noopener noreferrer" style="color: #34D399; text-decoration: none;">
-                      ▶ Watch Demo
-                    </a>
-                  {% elif sub.demo_video_path and (sub.demo_video_path.startswith('http') or 'drive.google.com' in sub.demo_video_path) %}
-                    <a href="{{ sub.demo_video_path }}" target="_blank" rel="noopener noreferrer" style="color: #34D399; text-decoration: none;">
-                      ▶ Watch Demo
-                    </a>
+        {% if submissions %}
+          <div class="submission-history-list">
+            {% for sub in submissions %}
+              <div class="history-item-box">
+                <div class="history-item-top">
+                  <span class="history-sub-title">Submission #{{ loop.revindex }}</span>
+                  {% if sub.status in ['COMPLETED', 'APPROVED'] %}
+                    <span class="status-badge badge-completed badge-xs">Approved</span>
+                  {% elif sub.status in ['REDO_REQUIRED', 'REVISION_REQUIRED'] %}
+                    <span class="status-badge badge-revision badge-xs">Redo Req.</span>
                   {% else %}
-                    <a href="{{ url_for('student.stream_submission_video', sub_id=sub.id) }}" target="_blank" rel="noopener noreferrer" style="color: #34D399; text-decoration: none;">
-                      ▶ Watch Demo
-                    </a>
+                    <span class="status-badge badge-submitted badge-xs">Under Review</span>
                   {% endif %}
                 </div>
-              {% endif %}
 
-              {% if sub.review_feedback %}
-                <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed var(--border-subtle); color: {% if sub.status == 'REDO_REQUIRED' %}#EF4444{% else %}var(--primary){% endif %}; font-style: italic;">
-                  "{{ sub.review_feedback }}"
+                <div class="history-item-date mono">
+                  {{ sub.submitted_at.strftime('%d %b %Y, %H:%M') if sub.submitted_at else 'Submitted' }}
                 </div>
-              {% endif %}
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p style="color: var(--text-muted); font-size: 0.825rem; text-align: center; padding: 1rem 0;">
-          No submissions recorded yet for this week.
-        </p>
-      {% endif %}
-    </div>
-  </div>
-</div>
-{% endif %}
 
+                {% if sub.github_url or sub.repo_url %}
+                  <div class="history-link-row">
+                    <a href="{{ sub.github_url or sub.repo_url }}" target="_blank" rel="noopener noreferrer" class="history-repo-link">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                      <span>Repository URL</span>
+                    </a>
+                  </div>
+                {% endif %}
+
+                {% if sub.demo_video_url or sub.demo_video_path or sub.file_path %}
+                  <div class="history-link-row">
+                    {% if sub.demo_video_url and (sub.demo_video_url.startswith('http') or 'drive.google.com' in sub.demo_video_url) %}
+                      <a href="{{ sub.demo_video_url }}" target="_blank" rel="noopener noreferrer" class="history-demo-link">
+                        ▶ Watch Demo
+                      </a>
+                    {% elif sub.demo_video_path and (sub.demo_video_path.startswith('http') or 'drive.google.com' in sub.demo_video_path) %}
+                      <a href="{{ sub.demo_video_path }}" target="_blank" rel="noopener noreferrer" class="history-demo-link">
+                        ▶ Watch Demo
+                      </a>
+                    {% else %}
+                      <a href="{{ url_for('student.stream_submission_video', sub_id=sub.id) }}" target="_blank" rel="noopener noreferrer" class="history-demo-link">
+                        ▶ Watch Demo
+                      </a>
+                    {% endif %}
+                  </div>
+                {% endif %}
+
+                {% if sub.submission_notes %}
+                  <div class="history-notes-preview">
+                    {{ sub.submission_notes }}
+                  </div>
+                {% endif %}
+
+                {% if sub.review_feedback %}
+                  <div class="history-feedback-quote {% if sub.status in ['REDO_REQUIRED', 'REVISION_REQUIRED'] %}feedback-redo{% endif %}">
+                    "{{ sub.review_feedback }}"
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="history-empty-text">
+            No submissions recorded yet for this week.
+          </div>
+        {% endif %}
+      </section>
+    </aside>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-// Micro-interaction: AJAX Task Toggle
+// Micro-interaction: AJAX Task Toggle with Real-Time Form State Synchronization
 document.querySelectorAll('.task-checkbox').forEach(function(checkbox) {
   checkbox.addEventListener('change', function(e) {
     const form = this.closest('form');
@@ -409,38 +681,45 @@ document.querySelectorAll('.task-checkbox').forEach(function(checkbox) {
           taskItem.classList.add('task-completed');
           label.style.textDecoration = 'line-through';
           label.style.opacity = '0.7';
+          if (!form.querySelector('.task-done-badge')) {
+            const badge = document.createElement('span');
+            badge.className = 'task-done-badge';
+            badge.textContent = '✓ DONE';
+            form.appendChild(badge);
+          }
         } else {
           taskItem.classList.remove('task-completed');
           label.style.textDecoration = 'none';
           label.style.opacity = '1';
+          const badge = form.querySelector('.task-done-badge');
+          if (badge) badge.remove();
         }
 
-        // Update progress badge & submission form state
-        const badge = document.getElementById('task-progress-badge');
-        if (badge) {
+        // Update progress badge in header
+        const progressBadge = document.getElementById('task-progress-badge');
+        if (progressBadge) {
           if (data.all_completed) {
-            badge.textContent = '✓ ALL TASKS DONE';
-            badge.style.color = 'var(--primary)';
+            progressBadge.textContent = '✓ ALL TASKS DONE';
+            progressBadge.classList.remove('badge-tasks-pending');
+            progressBadge.classList.add('badge-tasks-done');
           } else {
-            badge.textContent = `${data.completed_count}/${data.total_count} TASKS`;
-            badge.style.color = '#F59E0B';
+            progressBadge.textContent = `${data.completed_count}/${data.total_count} TASKS`;
+            progressBadge.classList.remove('badge-tasks-done');
+            progressBadge.classList.add('badge-tasks-pending');
           }
         }
 
-        // Enable/disable submission form inputs
+        // Update Submission Form inputs enable/disable state
         const subForm = document.getElementById('milestone-submission-form');
         if (subForm) {
-          const inputs = subForm.querySelectorAll('input, textarea, button[type="submit"]');
+          const inputs = subForm.querySelectorAll('input:not([type="hidden"]), textarea, button[type="submit"]');
           inputs.forEach(el => {
             el.disabled = !data.all_completed;
-            if (!data.all_completed) {
-              el.style.opacity = '0.5';
-              el.style.cursor = 'not-allowed';
-            } else {
-              el.style.opacity = '1';
-              el.style.cursor = 'pointer';
-            }
           });
+          const warningBox = document.querySelector('.tasks-incomplete-warning');
+          if (warningBox) {
+            warningBox.style.display = data.all_completed ? 'none' : 'flex';
+          }
         }
       }
     })

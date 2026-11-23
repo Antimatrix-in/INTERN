@@ -1,0 +1,139 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Project Telemetry — {{ project.title }} | Anti-Matrix Enterprise{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 pb-3 border-bottom" style="border-color: var(--border-light) !important;">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <a href="{{ url_for('admin.analytics', tab='projects') }}" class="text-xs text-muted text-decoration-none">
+          ← Back to Project Analytics
+        </a>
+        <span class="text-muted text-xs">•</span>
+        <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--brand-emerald); font-weight: 700;">
+          PROJECT TELEMETRY
+        </span>
+      </div>
+      <h1 class="h3 font-weight-bold text-dark mb-1" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">
+        {{ project.title }}
+      </h1>
+      <p class="text-sm text-muted mb-0 font-mono">
+        {{ project.project_code }} • {{ project.domain }} • {{ project.duration_months }} Month Track • Difficulty: {{ project.difficulty or 'INTERMEDIATE' }}
+      </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('admin.export_csv_report', report_type='projects_summary', search=project.title) }}" class="btn btn-sm btn-outline-secondary font-mono text-xs">
+        Export Project CSV
+      </a>
+      <a href="{{ url_for('admin.edit_project', project_id=project.id) }}" class="btn btn-sm btn-dark text-xs">
+        Edit Project Specs
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-3">
+    <!-- Allocation Saturation -->
+    <div class="col-md-4">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">CAPACITY UTILIZATION</div>
+        <div class="h3 font-weight-bold mb-0" style="color: var(--brand-emerald); font-weight: 800;">
+          {{ utilization }}%
+        </div>
+        <div class="progress mt-2" style="height: 6px;">
+          <div class="progress-bar {% if utilization > 90 %}bg-danger{% elif utilization >= 70 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ [utilization, 100]|min }}%;"></div>
+        </div>
+        <div class="text-xs text-muted mt-2 font-mono">{{ allocated_count }} of {{ capacity }} Interns Allocated</div>
+      </div>
+    </div>
+
+    <!-- Active Candidates -->
+    <div class="col-md-4">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6366F1;">ALLOCATED COHORT</div>
+        <div class="h3 font-weight-bold text-dark mb-0" style="font-weight: 800;">
+          {{ roster|length }} Interns
+        </div>
+        <div class="text-xs text-muted mt-2 font-mono">Enrolled across active batches</div>
+      </div>
+    </div>
+
+    <!-- Project Status -->
+    <div class="col-md-4">
+      <div class="p-3 bg-white rounded-3 border shadow-xs h-100">
+        <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">CURRICULUM STATUS</div>
+        <div class="h3 font-weight-bold mb-0" style="font-weight: 800;">
+          {% if project.is_active %}<span class="text-success">Active Curriculum</span>{% else %}<span class="text-muted">Archived</span>{% endif %}
+        </div>
+        <div class="text-xs text-muted mt-2 font-mono">Created {{ project.created_at.strftime('%Y-%m-%d') if project.created_at else 'N/A' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Allocated Candidates Roster -->
+  <div class="p-4 bg-white rounded-3 border shadow-xs">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="h6 font-weight-bold text-dark mb-0">Allocated Candidates Performance Roster</h5>
+        <span class="text-xs text-muted">Real-time completion telemetry of interns assigned to this project.</span>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 text-sm">
+        <thead class="table-light text-xs text-uppercase font-mono">
+          <tr>
+            <th>Intern ID</th>
+            <th>Candidate Name</th>
+            <th>Faculty Mentor</th>
+            <th>Status</th>
+            <th>Progress %</th>
+            <th>Milestones Completed</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in roster %}
+          <tr>
+            <td class="font-mono text-xs font-weight-bold">{{ r.intern_id }}</td>
+            <td>
+              <div class="font-weight-semibold text-dark">{{ r.full_name }}</div>
+              <div class="text-xs text-muted">{{ r.email }}</div>
+            </td>
+            <td>{{ r.mentor_name }}</td>
+            <td>
+              <span class="badge font-mono text-xs {% if r.status == 'ACTIVE' %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %}">
+                {{ r.status }}
+              </span>
+            </td>
+            <td style="min-width: 130px;">
+              <div class="d-flex align-items-center gap-1.5">
+                <div class="progress flex-grow-1" style="height: 6px;">
+                  <div class="progress-bar bg-success" style="width: {{ r.progress_percent }}%;"></div>
+                </div>
+                <span class="font-mono text-xs">{{ r.progress_percent }}%</span>
+              </div>
+            </td>
+            <td class="font-mono text-xs">{{ r.completed_milestones }}/{{ r.total_milestones }} ({{ r.milestone_rate }}%)</td>
+            <td class="text-end">
+              <a href="{{ url_for('admin.intern_analytics_detail', student_id=r.student.id) }}" class="btn btn-xs btn-outline-dark font-mono">
+                View Scorecard
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">No interns currently allocated to this project.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

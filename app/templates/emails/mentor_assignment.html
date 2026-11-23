@@ -1,0 +1,37 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-info">Mentor Assignment</span>
+</div>
+<h2 class="headline">Technical Mentor Assigned</h2>
+<p>Hello <strong>{{ recipient_name|default('Intern') }}</strong>,</p>
+<p>A dedicated technical mentor has been assigned to guide your internship progress and evaluate your deliverables:</p>
+
+<div class="detail-card">
+  <table width="100%" cellpadding="4" cellspacing="0">
+    <tr>
+      <td width="35%" style="color:#64748B; font-weight:600; font-size:13px;">Mentor Name:</td>
+      <td style="color:#0F172A; font-weight:700; font-size:13px;">{{ mentor_name }}</td>
+    </tr>
+    {% if mentor_email %}
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Contact Email:</td>
+      <td style="color:#0F172A; font-size:13px;">{{ mentor_email }}</td>
+    </tr>
+    {% endif %}
+    {% if mentor_dept %}
+    <tr>
+      <td style="color:#64748B; font-weight:600; font-size:13px;">Department:</td>
+      <td style="color:#0F172A; font-size:13px;">{{ mentor_dept }}</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+<p>Feel free to connect with your mentor for architecture reviews, technical clarifications, and weekly milestone check-ins.</p>
+
+<center>
+  <a href="{{ action_url|default('#') }}" class="cta-button">View Mentor Profile &rarr;</a>
+</center>
+{% endblock %}
