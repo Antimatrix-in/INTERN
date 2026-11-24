@@ -132,7 +132,8 @@ def run_safe_schema_migrations(app=None):
                     conn.execute(text("UPDATE payments SET gateway = 'cashfree' WHERE gateway IS NULL;"))
             logger.info("Immediate PostgreSQL DDL for users, students, applications, and payments executed successfully.")
         except Exception as e:
-            logger.warning(f"Immediate PostgreSQL DDL notice: {e}")
+            logger.error(f"Critical PostgreSQL migration failure: {e}", exc_info=True)
+            raise RuntimeError(f"Critical PostgreSQL migration DDL failure: {e}") from e
 
     inspector = inspect(engine)
     existing_tables = set(inspector.get_table_names())
@@ -170,7 +171,11 @@ def run_safe_schema_migrations(app=None):
                         ))
             logger.info("Index 'ix_users_employee_id' verified.")
         except Exception as e:
-            logger.warning(f"Note on index 'ix_users_employee_id': {e}")
+            if "already exists" in str(e).lower():
+                logger.debug("Index 'ix_users_employee_id' already exists.")
+            else:
+                logger.error(f"Failed to create index 'ix_users_employee_id': {e}", exc_info=True)
+                raise RuntimeError(f"Failed to create index 'ix_users_employee_id': {e}") from e
 
         # Step 3: Backfill existing users with NULL employee_id safely and deterministically
         _backfill_existing_users(engine, is_postgres)
@@ -248,7 +253,8 @@ def run_safe_schema_migrations(app=None):
                     if "already exists" in str(ex).lower() or "duplicate column" in str(ex).lower():
                         logger.debug(f"Column '{table.name}.{column.name}' already exists.")
                     else:
-                        logger.error(f"Failed to add column '{table.name}.{column.name}': {ex}")
+                        logger.error(f"Failed to add column '{table.name}.{column.name}': {ex}", exc_info=True)
+                        raise RuntimeError(f"Failed to add column '{table.name}.{column.name}': {ex}") from ex
 
         # Step 4b: Check for existing VARCHAR column length expansion on PostgreSQL
         if is_postgres:
@@ -344,4 +350,5 @@ def _backfill_existing_users(engine, is_postgres):
                 logger.info("Backfilled student employee_ids from students.student_uid where applicable.")
 
     except Exception as e:
-        logger.error(f"Error during existing user backfill: {e}")
+        logger.error(f"Error during existing user backfill: {e}", exc_info=True)
+        raise RuntimeError(f"Error during existing user backfill: {e}") from e
