@@ -100,13 +100,11 @@ def create_app(config_class=Config):
     from app.auth.routes import auth_bp
     from app.student.routes import student_bp
     from app.admin.routes import admin_bp
-    from app.mentor.routes import mentor_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(mentor_bp)
 
     # Register models & provide CLI commands for pre-deploy operations
     with app.app_context():

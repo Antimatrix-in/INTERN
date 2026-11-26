@@ -1,195 +1,59 @@
 {% extends 'student/base_student.html' %}
 
-{% block title %}Notifications &amp; Communications — ANTI MATRIX{% endblock %}
-{% block breadcrumb_title %}Notifications{% endblock %}
+{% block title %}Notifications — ANTI MATRIX{% endblock %}
 
 {% block content %}
-<div class="workspace-notifications" style="max-width: 1040px; margin: 0 auto; padding-bottom: 40px;">
-  <!-- Header -->
-  <header class="page-top-header flex-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-        <h1 class="page-main-title" style="margin: 0; font-size: 24px; font-weight: 700;">Notification Center</h1>
-        {% if unread_count and unread_count > 0 %}
-          <span class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">
-            {{ unread_count }} Unread
-          </span>
-        {% endif %}
-      </div>
-      <p class="page-main-subtitle" style="margin: 0; color: #94A3B8; font-size: 14px;">
-        Real-time alerts, milestone deadlines, mentor evaluation feedback, and broadcast announcements.
-      </p>
-    </div>
-
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <a href="{{ url_for('student.notification_preferences') }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        <span>Preferences</span>
-      </a>
-
-      <form method="POST" action="{{ url_for('student.mark_all_read') }}" class="mark-all-form" style="margin: 0;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="category" value="{{ active_category }}">
-        <button type="submit" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          <span>Mark All Read</span>
-        </button>
-      </form>
-    </div>
-  </header>
-
-  <!-- Broadcast Announcements Banner (if any) -->
-  {% if announcements %}
-    <div style="margin-bottom: 24px;">
-      <h2 style="font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #10B981; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-        Active Announcements &amp; Broadcasts
-      </h2>
-
-      {% for a in announcements %}
-        {% set is_read = a.is_read_by(current_user.id) %}
-        <div style="background: {% if a.priority == 'URGENT' %}rgba(220, 38, 38, 0.08){% else %}rgba(16, 185, 129, 0.06){% endif %}; border: 1px solid {% if a.priority == 'URGENT' %}rgba(220, 38, 38, 0.25){% else %}rgba(16, 185, 129, 0.25){% endif %}; border-left: 4px solid {% if a.priority == 'URGENT' %}#DC2626{% else %}#10B981{% endif %}; border-radius: 8px; padding: 18px 22px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 260px;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
-              <span style="font-weight: 700; font-size: 11px; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: {% if a.priority == 'URGENT' %}#DC2626{% else %}#10B981{% endif %}; color: #FFFFFF;">
-                {{ a.priority }}
-              </span>
-              <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #F8FAFC;">{{ a.title }}</h3>
-              {% if is_read %}
-                <span style="font-size: 11px; color: #94A3B8; background: rgba(148, 163, 184, 0.15); padding: 2px 6px; border-radius: 4px;">Acknowledged</span>
-              {% else %}
-                <span style="font-size: 11px; color: #F59E0B; background: rgba(245, 158, 11, 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600;">Unacknowledged</span>
-              {% endif %}
-            </div>
-            <div style="font-size: 14px; color: #CBD5E1; line-height: 1.6; margin-bottom: 8px;">
-              {{ a.content }}
-            </div>
-            <div style="font-size: 12px; color: #94A3B8; display: flex; gap: 16px; align-items: center;">
-              <span>By: <strong>{{ a.author.full_name or a.author.name if a.author else 'System Admin' }}</strong></span>
-              <span>&bull;</span>
-              <span>{{ a.created_at.strftime('%d %b %Y, %H:%M') }}</span>
-            </div>
-          </div>
-
-          {% if not is_read %}
-            <form method="POST" action="{{ url_for('student.acknowledge_announcement', announcement_id=a.id) }}" style="margin: 0;">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-outline-primary btn-sm" style="white-space: nowrap; font-size: 12px; padding: 6px 14px;">
-                Acknowledge &check;
-              </button>
-            </form>
-          {% endif %}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <!-- Category Filter Bar -->
-  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(148, 163, 184, 0.15); margin-bottom: 20px; padding-bottom: 12px; flex-wrap: wrap; gap: 12px;">
-    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-      {% set cats = [
-        ('ALL', 'All Alerts'),
-        ('TASK', 'Tasks'),
-        ('DEADLINE', 'Deadlines'),
-        ('SUBMISSION', 'Submissions'),
-        ('ALLOCATION', 'Allocations'),
-        ('ANNOUNCEMENT', 'Announcements'),
-        ('EVALUATION', 'Evaluations')
-      ] %}
-      {% for cat_key, cat_label in cats %}
-        <a href="{{ url_for('student.notifications', category=cat_key, unread=1 if unread_only else 0) }}"
-           style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s;
-                  background: {% if active_category == cat_key %}#10B981{% else %}rgba(148, 163, 184, 0.08){% endif %};
-                  color: {% if active_category == cat_key %}#FFFFFF{% else %}#94A3B8{% endif %};">
-          {{ cat_label }}
-        </a>
-      {% endfor %}
-    </div>
-
-    <div>
-      <a href="{{ url_for('student.notifications', category=active_category, unread=0 if unread_only else 1) }}"
-         style="font-size: 13px; color: {% if unread_only %}#10B981{% else %}#94A3B8{% endif %}; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: {% if unread_only %}#10B981{% else %}#64748B{% endif %};"></span>
-        {{ 'Showing Unread Only' if unread_only else 'Filter Unread Only' }}
-      </a>
-    </div>
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.35rem;">Portal Notifications</h1>
+    <p style="color: var(--text-muted); font-size: 0.925rem;">
+      Live system alerts, milestone review updates, and evaluation scheduling announcements.
+    </p>
   </div>
 
-  <!-- Notifications Feed -->
-  <section class="card notifications-card" aria-label="Notifications Feed" style="background: #0B130E; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; padding: 20px;">
-    {% if notifications %}
-      <div class="notifications-feed-list" style="display: flex; flex-direction: column; gap: 12px;">
-        {% for n in notifications %}
-          <div class="notification-item-card {% if not n.is_read %}notification-unread{% endif %}"
-               style="display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 18px; border-radius: 8px; border: 1px solid {% if not n.is_read %}rgba(16, 185, 129, 0.35){% else %}rgba(148, 163, 184, 0.1){% endif %}; background: {% if not n.is_read %}rgba(16, 185, 129, 0.04){% else %}rgba(255, 255, 255, 0.01){% endif %}; transition: all 0.2s; gap: 16px; flex-wrap: wrap;">
+  <form method="POST" action="{{ url_for('student.mark_all_read') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-secondary btn-sm">
+      Mark All as Read
+    </button>
+  </form>
+</div>
 
-            <div class="notification-item-left" style="display: flex; gap: 14px; align-items: flex-start; flex: 1; min-width: 240px;">
-              <span class="notification-dot" style="margin-top: 6px; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-                background: {% if n.type == 'SUCCESS' %}#10B981{% elif n.type == 'WARNING' or n.type == 'ACTION_REQUIRED' %}#F59E0B{% else %}#0EA5E9{% endif %};
-                box-shadow: 0 0 8px {% if n.type == 'SUCCESS' %}rgba(16, 185, 129, 0.5){% elif n.type == 'WARNING' %}rgba(245, 158, 11, 0.5){% else %}rgba(14, 165, 233, 0.5){% endif %};">
-              </span>
-
-              <div class="notification-item-content" style="flex: 1;">
-                <div class="notification-header-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;">
-                  <h3 class="notification-title" style="margin: 0; font-size: 15px; font-weight: 700; color: #F8FAFC;">{{ n.title }}</h3>
-                  {% if not n.is_read %}
-                    <span class="status-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">New</span>
-                  {% endif %}
-                  {% if n.category %}
-                    <span style="font-size: 11px; color: #94A3B8; background: rgba(148, 163, 184, 0.1); padding: 1px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 600;">
-                      {{ n.category }}
-                    </span>
-                  {% endif %}
-                </div>
-
-                <p class="notification-message" style="margin: 0 0 8px 0; font-size: 14px; color: #CBD5E1; line-height: 1.5;">
-                  {{ n.message }}
-                </p>
-
-                <span class="mono notification-time" style="font-size: 12px; color: #64748B;">
-                  {{ n.created_at.strftime('%d %b %Y, %H:%M') if n.created_at else 'Recent' }}
-                </span>
+<div class="card">
+  {% if notifications %}
+    <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+      {% for n in notifications %}
+        <div style="background: var(--bg-surface-elevated); border: 1px solid {% if not n.is_read %}var(--primary){% else %}var(--border-subtle){% endif %}; border-radius: var(--radius-md); padding: 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+          <div style="display: flex; gap: 1rem; align-items: flex-start;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: {% if n.type == 'SUCCESS' %}var(--primary){% elif n.type == 'WARNING' %}var(--warning){% else %}var(--info){% endif %}; margin-top: 0.35rem; flex-shrink: 0;"></div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.25rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">{{ n.title }}</h4>
+                {% if not n.is_read %}
+                  <span class="status-badge badge-available" style="font-size: 0.65rem; padding: 0.15rem 0.5rem;">New</span>
+                {% endif %}
               </div>
-            </div>
-
-            <div class="notification-item-action" style="display: flex; align-items: center; gap: 10px;">
-              {% if not n.is_read %}
-                <form method="POST" action="{{ url_for('student.mark_single_notification_read', notification_id=n.id) }}" style="margin: 0;">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" title="Mark as Read" style="background: none; border: 1px solid rgba(148, 163, 184, 0.2); color: #94A3B8; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>Read</span>
-                  </button>
-                </form>
-              {% endif %}
-
-              {% if n.link %}
-                <a href="{{ n.link }}" class="btn btn-outline-primary btn-sm" style="font-size: 12px; padding: 5px 12px; text-decoration: none;">
-                  <span>View &rarr;</span>
-                </a>
-              {% endif %}
+              <p style="font-size: 0.885rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.5rem;">
+                {{ n.message }}
+              </p>
+              <span class="mono" style="font-size: 0.775rem; color: var(--text-subtle);">
+                {{ n.created_at.strftime('%d %b %Y, %H:%M') if n.created_at else 'Recent' }}
+              </span>
             </div>
           </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="empty-notifications-box" style="text-align: center; padding: 60px 20px;">
-        <div class="empty-icon-circle" aria-hidden="true" style="width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-        </div>
-        <h3 class="empty-headline" style="font-size: 18px; font-weight: 700; color: #F8FAFC; margin: 0 0 6px 0;">No Notifications Found</h3>
-        <p class="empty-desc" style="font-size: 14px; color: #94A3B8; margin: 0 auto; max-width: 440px;">
-          {% if unread_only %}
-            You have no unread notifications in this category. You're completely caught up!
-          {% else %}
-            No alerts or announcements recorded under this filter. All milestone and evaluation updates will appear here.
+
+          {% if n.link %}
+            <a href="{{ n.link }}" class="btn btn-outline-primary btn-sm" style="flex-shrink: 0;">
+              View Details →
+            </a>
           {% endif %}
-        </p>
-      </div>
-    {% endif %}
-  </section>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+      <p>No notifications found in your feed.</p>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

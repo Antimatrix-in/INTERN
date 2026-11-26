@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event
@@ -32,13 +32,6 @@ class User(db.Model, UserMixin):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Mentor Profile & Operational Attributes (Module 3)
-    department = db.Column(db.String(100), nullable=True, default='Engineering')
-    skills = db.Column(db.String(255), nullable=True, default='Full-Stack Development')
-    designation = db.Column(db.String(100), nullable=True, default='Technical Mentor')
-    max_capacity = db.Column(db.Integer, nullable=True, default=5)
-    availability_status = db.Column(db.String(30), nullable=True, default='AVAILABLE') # AVAILABLE, BUSY, ON_LEAVE
-
     def __init__(self, **kwargs):
         if 'full_name' in kwargs and 'name' not in kwargs:
             kwargs['name'] = kwargs['full_name']
@@ -49,15 +42,7 @@ class User(db.Model, UserMixin):
     # Relationships
     student_profile = db.relationship('Student', backref='user', uselist=False, cascade='all, delete-orphan')
     notifications = db.relationship('Notification', backref='user', lazy='dynamic', cascade='all, delete-orphan', order_by='Notification.id.desc()')
-    notification_preferences = db.relationship('NotificationPreference', backref='user', uselist=False, cascade='all, delete-orphan')
     audit_logs = db.relationship('AuditLog', backref='actor', lazy='dynamic')
-
-    @property
-    def unread_notifications_count(self):
-        try:
-            return self.notifications.filter_by(is_read=False).count()
-        except Exception:
-            return 0
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -105,38 +90,6 @@ class User(db.Model, UserMixin):
         except Exception:
             pass
         return self.role in ['super_admin', 'admin', 'hr', 'mentor', 'evaluator']
-
-    # Mentor Operations & Telemetry Properties (Module 3)
-    @property
-    def active_interns_count(self):
-        from app.models import Internship
-        return Internship.query.filter_by(mentor_id=self.id, status='ACTIVE').count()
-
-    @property
-    def assigned_internships_list(self):
-        from app.models import Internship
-        return Internship.query.filter_by(mentor_id=self.id).order_by(Internship.id.desc()).all()
-
-    @property
-    def is_at_capacity(self):
-        cap = self.max_capacity if (self.max_capacity and self.max_capacity > 0) else 5
-        return self.active_interns_count >= cap
-
-    @property
-    def capacity_percent(self):
-        cap = self.max_capacity if (self.max_capacity and self.max_capacity > 0) else 5
-        return min(100, int((self.active_interns_count / cap) * 100))
-
-    @property
-    def pending_reviews_count(self):
-        from app.models import Internship, WeeklySubmission
-        student_ids = [i.student_id for i in Internship.query.filter_by(mentor_id=self.id, status='ACTIVE').all()]
-        if not student_ids:
-            return 0
-        return WeeklySubmission.query.filter(
-            WeeklySubmission.student_id.in_(student_ids),
-            WeeklySubmission.status.in_(['SUBMITTED', 'UNDER_REVIEW'])
-        ).count()
 
     def __repr__(self):
         return f'<User {self.email} ({self.role})>'
@@ -213,8 +166,6 @@ class Student(db.Model):
     payments = db.relationship('Payment', primaryjoin="foreign(Payment.student_id) == Student.id", lazy='dynamic')
     submissions = db.relationship('WeeklySubmission', back_populates='student', lazy='dynamic', cascade='all, delete-orphan')
     meetings = db.relationship('Meeting', back_populates='student', lazy='dynamic')
-    attendance_records = db.relationship('AttendanceRecord', back_populates='student', lazy='dynamic', cascade='all, delete-orphan')
-    leave_requests = db.relationship('LeaveRequest', back_populates='student', lazy='dynamic', cascade='all, delete-orphan')
 
     @property
     def active_internship(self):
@@ -227,30 +178,6 @@ class Student(db.Model):
         if hasattr(self, '_preloaded_application'):
             return self._preloaded_application
         return self.applications.first()
-
-    @property
-    def skills(self):
-        return self.user.skills if self.user and self.user.skills else ''
-
-    @skills.setter
-    def skills(self, val):
-        if self.user:
-            self.user.skills = val
-
-    @property
-    def skills_list(self):
-        s = self.skills
-        if not s:
-            return []
-        return [x.strip() for x in s.split(',') if x.strip()]
-
-    @property
-    def full_name(self):
-        return self.user.full_name if self.user and self.user.full_name else 'Intern'
-
-    @property
-    def email(self):
-        return self.user.email if self.user else ''
 
     def __repr__(self):
         return f'<Student {self.student_uid} - {self.user.full_name if self.user else ""}>'
@@ -454,27 +381,19 @@ class Internship(db.Model):
     issued_documents = db.relationship('IssuedDocument', backref='internship', lazy='dynamic')
     verification = db.relationship('CertificateVerification', backref='internship', uselist=False)
     meetings = db.relationship('Meeting', back_populates='internship', lazy='dynamic')
-    attendance_records = db.relationship('AttendanceRecord', back_populates='internship', lazy='dynamic')
-    leave_requests = db.relationship('LeaveRequest', back_populates='internship', lazy='dynamic')
 
     @property
     def assigned_mentor(self):
         """
-        Returns the assigned mentor only if they are one of the approved mentors or a valid active mentor.
-        Invalid or legacy mentors (e.g. Dr. Rajesh Sharma at mentor@antimatrix.com) will return None.
+        Returns the assigned mentor only if they are one of the four approved mentors.
+        Invalid or legacy mentors (e.g. Dr. Rajesh Sharma) will return None.
         """
-        if not self.mentor:
-            return None
-        if self.mentor.email in (
+        if self.mentor and self.mentor.email in (
             'praveen@antimatrix.co.in',
             'satishkumar@antimatrix.co.in',
             'rohit@antimatrix.co.in',
             'bharatbabu@antimatrix.co.in'
         ):
-            return self.mentor
-        if self.mentor.email == 'mentor@antimatrix.com' or 'Rajesh Sharma' in (self.mentor.full_name or ''):
-            return None
-        if self.mentor.role == 'mentor' and self.mentor.is_active:
             return self.mentor
         return None
 
@@ -502,12 +421,7 @@ class Internship(db.Model):
         if not name:
             return None
         from app.services.mentor_service import get_canonical_mentor_email
-        canon = get_canonical_mentor_email(name)
-        if canon:
-            return canon
-        if self.mentor:
-            return self.mentor.email
-        return None
+        return get_canonical_mentor_email(name)
 
     @property
     def active_assignment(self):
@@ -585,8 +499,6 @@ class Project(db.Model):
     duration_weeks = db.Column(db.Integer, default=4) # 4 or 12
     duration_months = db.Column(db.Integer, default=1) # 1 or 3
     difficulty = db.Column(db.String(50), default='Intermediate') # Beginner, Intermediate, Advanced, Easy to Medium, etc.
-    max_capacity = db.Column(db.Integer, default=10, nullable=True) # Maximum intern allocation capacity
-    is_archived = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -625,61 +537,14 @@ class Project(db.Model):
 
     @property
     def status(self):
-        if self.is_archived:
-            return 'ARCHIVED'
         return 'ACTIVE' if self.is_active else 'INACTIVE'
 
     @status.setter
     def status(self, val):
-        val_str = str(val).upper()
-        if val_str == 'ARCHIVED':
-            self.is_archived = True
-            self.is_active = False
-        elif val_str == 'ACTIVE':
-            self.is_archived = False
-            self.is_active = True
-        elif val_str == 'INACTIVE':
-            self.is_archived = False
-            self.is_active = False
-        elif isinstance(val, bool):
+        if isinstance(val, bool):
             self.is_active = val
-            self.is_archived = False
-
-    @property
-    def active_interns_count(self):
-        if hasattr(self, '_preloaded_active_interns_count'):
-            return self._preloaded_active_interns_count
-        try:
-            from app.models import Internship, ProjectAssignment
-            return self.assignments.filter(
-                ProjectAssignment.status.in_(['ASSIGNED', 'IN_PROGRESS', 'SUBMITTED', 'REVISION_REQUIRED', 'UNDER_EVALUATION', 'ACTIVE'])
-            ).join(Internship).filter(Internship.status == 'ACTIVE').count()
-        except Exception:
-            return 0
-
-    @property
-    def is_at_capacity(self):
-        limit = self.max_capacity if (self.max_capacity is not None and self.max_capacity > 0) else 10
-        return self.active_interns_count >= limit
-
-    @property
-    def remaining_capacity(self):
-        limit = self.max_capacity if (self.max_capacity is not None and self.max_capacity > 0) else 10
-        return max(0, limit - self.active_interns_count)
-
-    @property
-    def capacity_percent(self):
-        limit = self.max_capacity if (self.max_capacity is not None and self.max_capacity > 0) else 10
-        return min(100, int((self.active_interns_count / limit) * 100))
-
-    @property
-    def tech_stack_list(self):
-        ts = self.tech_stack
-        if isinstance(ts, list):
-            return [str(x).strip() for x in ts if str(x).strip()]
-        if isinstance(ts, str):
-            return [x.strip() for x in ts.split(',') if x.strip()]
-        return []
+        else:
+            self.is_active = (str(val).upper() == 'ACTIVE')
 
     @property
     def total_weeks(self):
@@ -806,13 +671,6 @@ class ProjectWeek(db.Model):
             return []
 
     @property
-    def reference_resources(self):
-        try:
-            return json.loads(self.reference_resources_json) if self.reference_resources_json else []
-        except:
-            return []
-
-    @property
     def expected_features(self):
         try:
             return json.loads(self.expected_features_json) if self.expected_features_json else []
@@ -898,7 +756,6 @@ class ProjectAssignment(db.Model):
     tech_used = db.Column(db.String(255), nullable=True)
     challenges = db.Column(db.Text, nullable=True)
     remarks = db.Column(db.Text, nullable=True)
-    override_reason = db.Column(db.Text, nullable=True) # Admin override rationale for low match or capacity
     submitted_at = db.Column(db.DateTime, nullable=True)
 
     assigner = db.relationship('User', foreign_keys=[assigned_by])
@@ -942,30 +799,17 @@ class WeeklyMilestone(db.Model):
     admin_notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Extended Task Management attributes (Phase 2 Module 5)
-    technical_requirements = db.Column(db.Text, nullable=True)
-    reference_resources_json = db.Column(db.Text, nullable=True)
-    rubric_id = db.Column(db.Integer, db.ForeignKey('evaluation_rubrics.id', ondelete='SET NULL'), nullable=True)
-
     # Relationships
     tasks = db.relationship('WeeklyTask', backref='milestone', lazy='dynamic', cascade='all, delete-orphan', order_by='WeeklyTask.order_num.asc()')
     submissions = db.relationship('WeeklySubmission', backref='milestone', lazy='dynamic', cascade='all, delete-orphan', order_by='WeeklySubmission.id.desc()')
     evaluations = db.relationship('Evaluation', backref='milestone', lazy='dynamic')
     meetings = db.relationship('Meeting', backref='milestone', lazy='dynamic')
     approver = db.relationship('User', foreign_keys=[approved_by])
-    rubric = db.relationship('EvaluationRubric', foreign_keys=[rubric_id])
 
     @property
     def deliverables(self):
         try:
             return json.loads(self.deliverables_json) if self.deliverables_json else []
-        except:
-            return []
-
-    @property
-    def reference_resources(self):
-        try:
-            return json.loads(self.reference_resources_json) if self.reference_resources_json else []
         except:
             return []
 
@@ -1044,27 +888,8 @@ class WeeklyTask(db.Model):
     is_completed = db.Column(db.Boolean, default=False)
     order_num = db.Column(db.Integer, default=1)
 
-    # Extended Task Management attributes (Phase 2 Module 5)
-    description = db.Column(db.Text, nullable=True)
-    technical_requirements = db.Column(db.Text, nullable=True)
-    reference_resources = db.Column(db.Text, nullable=True)
-    priority = db.Column(db.String(20), default='Medium') # High, Medium, Low
-    status = db.Column(db.String(30), default='ASSIGNED') # ASSIGNED, IN_PROGRESS, COMPLETED
-    due_date = db.Column(db.DateTime, nullable=True)
-    assigned_to_id = db.Column(db.Integer, db.ForeignKey('students.id', ondelete='SET NULL'), nullable=True)
-
-    assigned_to = db.relationship('Student', foreign_keys=[assigned_to_id])
-
-    @property
-    def title(self):
-        return self.task_text
-
-    @title.setter
-    def title(self, value):
-        self.task_text = value
-
     def __repr__(self):
-        return f'<WeeklyTask {self.task_text} ({self.status})>'
+        return f'<WeeklyTask {self.task_text}>'
 
 
 class WeeklySubmission(db.Model):
@@ -1080,7 +905,6 @@ class WeeklySubmission(db.Model):
     demo_video_path = db.Column(db.String(255), nullable=True)
     file_path = db.Column(db.String(255), nullable=True)
     submission_notes = db.Column(db.Text, nullable=True)
-    implementation_summary = db.Column(db.Text, nullable=True) # Phase 2 Module 5
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     status = db.Column(db.String(30), default='SUBMITTED') # SUBMITTED, UNDER_REVIEW, APPROVED, REDO_REQUIRED, REVISION_REQUIRED, COMPLETED
@@ -1132,121 +956,6 @@ class Meeting(db.Model):
         return f'<Meeting {self.title} ({self.status})>'
 
 
-class EvaluationRubric(db.Model):
-    """
-    Enterprise Evaluation Rubric with 5 configurable criteria:
-    - Technical implementation
-    - Code quality
-    - Functionality
-    - Documentation
-    - Presentation
-    Enforces that the sum of all weights equals exactly 100%.
-    """
-    __tablename__ = 'evaluation_rubrics'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), default='Standard Evaluation Rubric')
-    description = db.Column(db.String(255), nullable=True)
-    is_active = db.Column(db.Boolean, default=True)
-    is_default = db.Column(db.Boolean, default=True)
-
-    # 5 standard criteria weights (must total 100%)
-    weight_technical = db.Column(db.Integer, default=25)      # Technical Implementation
-    weight_code_quality = db.Column(db.Integer, default=25)   # Code Quality
-    weight_functionality = db.Column(db.Integer, default=25)  # Functionality
-    weight_documentation = db.Column(db.Integer, default=15)  # Documentation
-    weight_presentation = db.Column(db.Integer, default=10)   # Presentation
-
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    creator = db.relationship('User', foreign_keys=[created_by])
-
-    @property
-    def total_weight(self):
-        return (
-            (self.weight_technical or 0) +
-            (self.weight_code_quality or 0) +
-            (self.weight_functionality or 0) +
-            (self.weight_documentation or 0) +
-            (self.weight_presentation or 0)
-        )
-
-    @property
-    def is_valid_100(self):
-        return self.total_weight == 100
-
-    @classmethod
-    def get_active(cls):
-        """Retrieve active default rubric, or create standard 100% rubric if missing."""
-        rubric = cls.query.filter_by(is_active=True, is_default=True).first()
-        if not rubric:
-            rubric = cls.query.filter_by(is_active=True).first()
-        if not rubric:
-            rubric = cls(
-                name='Standard Evaluation Rubric',
-                description='5-criteria weighted rubric (100% total)',
-                weight_technical=25,
-                weight_code_quality=25,
-                weight_functionality=25,
-                weight_documentation=15,
-                weight_presentation=10,
-                is_active=True,
-                is_default=True
-            )
-            db.session.add(rubric)
-            try:
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-        return rubric
-
-    def calculate_score(self, technical, code_quality, functionality, documentation, presentation):
-        """Calculates consistent weighted score (0-100) based on criterion inputs (0-100 each)."""
-        tech = max(0, min(100, float(technical if technical is not None else 0)))
-        code = max(0, min(100, float(code_quality if code_quality is not None else 0)))
-        func = max(0, min(100, float(functionality if functionality is not None else 0)))
-        doc = max(0, min(100, float(documentation if documentation is not None else 0)))
-        pres = max(0, min(100, float(presentation if presentation is not None else 0)))
-
-        w_tech = float(self.weight_technical or 0)
-        w_code = float(self.weight_code_quality or 0)
-        w_func = float(self.weight_functionality or 0)
-        w_doc = float(self.weight_documentation or 0)
-        w_pres = float(self.weight_presentation or 0)
-
-        total_weight = w_tech + w_code + w_func + w_doc + w_pres
-        if total_weight <= 0:
-            total_weight = 100.0
-
-        weighted_sum = (
-            (tech * w_tech) +
-            (code * w_code) +
-            (func * w_func) +
-            (doc * w_doc) +
-            (pres * w_pres)
-        )
-        return int(round(weighted_sum / (total_weight / 100.0) / 100.0))
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'weight_technical': self.weight_technical,
-            'weight_code_quality': self.weight_code_quality,
-            'weight_functionality': self.weight_functionality,
-            'weight_documentation': self.weight_documentation,
-            'weight_presentation': self.weight_presentation,
-            'total_weight': self.total_weight,
-            'is_valid_100': self.is_valid_100
-        }
-
-    def __repr__(self):
-        return f'<EvaluationRubric {self.name} Total={self.total_weight}%>'
-
-
 class Evaluation(db.Model):
     __tablename__ = 'evaluations'
 
@@ -1259,24 +968,15 @@ class Evaluation(db.Model):
     evaluator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     action = db.Column(db.String(50), nullable=True) # REDO, VERIFY, PROCEED_TO_NEXT
     remarks = db.Column(db.Text, nullable=True)
-
-    # 5 standard criteria scores (Phase 2 Module 5)
-    technical_score = db.Column(db.Integer, default=0)
-    code_quality_score = db.Column(db.Integer, default=0)
-    functionality_score = db.Column(db.Integer, default=0)
-    documentation_score = db.Column(db.Integer, default=0)
-    presentation_score = db.Column(db.Integer, default=0)
-
-    # Legacy scores for backward compatibility
-    ui_ux_score = db.Column(db.Integer, default=0)
-    demo_score = db.Column(db.Integer, default=0)
-    originality_score = db.Column(db.Integer, default=0)
-
+    technical_score = db.Column(db.Integer, default=0) # max 20
+    functionality_score = db.Column(db.Integer, default=0) # max 20
+    ui_ux_score = db.Column(db.Integer, default=0) # max 15
+    documentation_score = db.Column(db.Integer, default=0) # max 15
+    demo_score = db.Column(db.Integer, default=0) # max 15
+    originality_score = db.Column(db.Integer, default=0) # max 10
+    presentation_score = db.Column(db.Integer, default=0) # max 5
     total_score = db.Column(db.Integer, default=0) # max 100
-    rubric_id = db.Column(db.Integer, db.ForeignKey('evaluation_rubrics.id', ondelete='SET NULL'), nullable=True)
-    rubric_snapshot_json = db.Column(db.Text, nullable=True)
-
-    result = db.Column(db.String(30), nullable=True) # PASSED, NEEDS_IMPROVEMENT, FAILED, REDO_REQUIRED, VERIFIED
+    result = db.Column(db.String(30), nullable=True) # PASSED, NEEDS_IMPROVEMENT, FAILED
     feedback = db.Column(db.Text, nullable=True)
     revision_notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -1285,7 +985,6 @@ class Evaluation(db.Model):
     admin = db.relationship('User', foreign_keys=[admin_id])
     evaluator = db.relationship('User', foreign_keys=[evaluator_id])
     employee = db.relationship('Student', foreign_keys=[employee_id])
-    rubric = db.relationship('EvaluationRubric', foreign_keys=[rubric_id])
 
 
 class IssuedDocument(db.Model):
@@ -1306,28 +1005,6 @@ class IssuedDocument(db.Model):
     issuer = db.relationship('User', foreign_keys=[issued_by])
     student = db.relationship('Student', foreign_keys=[student_id])
 
-    @property
-    def display_type(self):
-        mapping = {
-            'OFFER_LETTER': 'Official Offer Letter',
-            'JOINING_LETTER': 'Official Joining Letter',
-            'CERTIFICATE': 'Completion Certificate',
-            'EXPERIENCE_LETTER': 'Experience Letter',
-            'INTERNSHIP_AGREEMENT': 'Internship Agreement'
-        }
-        return mapping.get(self.doc_type, self.doc_type.replace('_', ' ').title())
-
-    @property
-    def is_active(self):
-        return self.status in ['ISSUED', 'GENERATED']
-
-    @property
-    def is_revoked(self):
-        return self.status == 'REVOKED'
-
-    def __repr__(self):
-        return f'<IssuedDocument {self.document_no} - {self.doc_type} - {self.status}>'
-
 
 class CertificateVerification(db.Model):
     __tablename__ = 'certificate_verifications'
@@ -1345,17 +1022,6 @@ class CertificateVerification(db.Model):
     qr_code_data = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    @property
-    def is_valid(self):
-        return self.status in ['Successfully Completed', 'VALID', 'VERIFIED']
-
-    @property
-    def is_revoked(self):
-        return self.status in ['Revoked', 'REVOKED']
-
-    def __repr__(self):
-        return f'<CertificateVerification {self.certificate_no} - {self.student_name} - {self.status}>'
-
 
 class Notification(db.Model):
     __tablename__ = 'notifications'
@@ -1366,87 +1032,8 @@ class Notification(db.Model):
     message = db.Column(db.Text, nullable=False)
     type = db.Column(db.String(30), default='INFO') # INFO, SUCCESS, WARNING, ACTION_REQUIRED
     link = db.Column(db.String(255), nullable=True)
-    category = db.Column(db.String(50), default='GENERAL', nullable=True) # GENERAL, TASK, DEADLINE, SUBMISSION, ALLOCATION, ANNOUNCEMENT, EVALUATION, COMPLETION
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class NotificationPreference(db.Model):
-    """
-    User notification preferences model (Module 7).
-    Allows granular control over email and in-portal alerts.
-    """
-    __tablename__ = 'notification_preferences'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), unique=True, nullable=False, index=True)
-    email_enabled = db.Column(db.Boolean, default=True, nullable=False)
-    in_portal_enabled = db.Column(db.Boolean, default=True, nullable=False)
-    deadline_reminders = db.Column(db.Boolean, default=True, nullable=False)
-    announcements = db.Column(db.Boolean, default=True, nullable=False)
-    evaluations = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-
-    def to_dict(self):
-        return {
-            'email_enabled': self.email_enabled,
-            'in_portal_enabled': self.in_portal_enabled,
-            'deadline_reminders': self.deadline_reminders,
-            'announcements': self.announcements,
-            'evaluations': self.evaluations,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        }
-
-
-class Announcement(db.Model):
-    """
-    Central broadcast announcements model (Module 7).
-    Published by administrators or mentors to target roles, tracks, or projects.
-    """
-    __tablename__ = 'announcements'
-
-    id = db.Column(db.Integer, primary_key=True)
-    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    target_role = db.Column(db.String(30), default='ALL', nullable=False) # ALL, STUDENT, MENTOR
-    department = db.Column(db.String(100), nullable=True) # Optional department filter
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True) # Optional project filter
-    priority = db.Column(db.String(20), default='NORMAL', nullable=False) # NORMAL, URGENT
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
-    # Relationships
-    author = db.relationship('User', foreign_keys=[author_id], backref=db.backref('authored_announcements', lazy='dynamic'))
-    project = db.relationship('Project', backref=db.backref('announcements', lazy='dynamic'))
-    reads = db.relationship('AnnouncementRead', backref='announcement', cascade='all, delete-orphan', lazy='dynamic')
-
-    @property
-    def read_count(self):
-        return self.reads.count()
-
-    def is_read_by(self, user_id):
-        if not user_id:
-            return False
-        return self.reads.filter_by(user_id=user_id).first() is not None
-
-
-class AnnouncementRead(db.Model):
-    """
-    Tracks which users have acknowledged/read each announcement (Module 7).
-    """
-    __tablename__ = 'announcement_reads'
-
-    id = db.Column(db.Integer, primary_key=True)
-    announcement_id = db.Column(db.Integer, db.ForeignKey('announcements.id', ondelete='CASCADE'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    read_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
-    __table_args__ = (
-        db.UniqueConstraint('announcement_id', 'user_id', name='uq_announcement_user_read'),
-    )
-
-    user = db.relationship('User', backref=db.backref('announcement_reads', lazy='dynamic'))
 
 
 class AuditLog(db.Model):
@@ -1616,161 +1203,4 @@ class EmployeeOnboardingCredential(db.Model):
 
     def __repr__(self):
         return f"<EmployeeOnboardingCredential id={self.id} employee_id='{self.employee_id}' status='{self.status}'>"
-
-
-# ─── MODULE 9: ATTENDANCE, LEAVE & INTERNSHIP SCHEDULING MODELS ─────────────
-
-class AttendanceRecord(db.Model):
-    """
-    Daily attendance record for an intern (Phase 2 Module 9).
-    Enforces that an intern can only have one attendance record per day.
-    """
-    __tablename__ = 'attendance_records'
-    __table_args__ = (
-        db.UniqueConstraint('student_id', 'date', name='uq_attendance_student_date'),
-    )
-
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id', ondelete='CASCADE'), nullable=False, index=True)
-    internship_id = db.Column(db.Integer, db.ForeignKey('internships.id', ondelete='CASCADE'), nullable=False, index=True)
-    date = db.Column(db.Date, nullable=False, index=True)
-    check_in_time = db.Column(db.DateTime, nullable=True)
-    check_out_time = db.Column(db.DateTime, nullable=True)
-    status = db.Column(db.String(20), default='PRESENT', nullable=False) # PRESENT, LATE, HALF_DAY, ABSENT, ON_LEAVE, HOLIDAY
-    work_duration_minutes = db.Column(db.Integer, default=0, nullable=False)
-    ip_address = db.Column(db.String(50), nullable=True)
-    check_in_notes = db.Column(db.Text, nullable=True)
-    is_corrected = db.Column(db.Boolean, default=False, nullable=False)
-    correction_reason = db.Column(db.Text, nullable=True)
-    corrected_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    corrected_at = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    student = db.relationship('Student', back_populates='attendance_records')
-    internship = db.relationship('Internship', back_populates='attendance_records')
-    corrector = db.relationship('User', foreign_keys=[corrected_by])
-
-    @property
-    def work_duration_hours(self):
-        return round((self.work_duration_minutes or 0) / 60.0, 1)
-
-    @property
-    def work_duration_formatted(self):
-        mins = self.work_duration_minutes or 0
-        h = mins // 60
-        m = mins % 60
-        return f"{h}h {m}m"
-
-    @property
-    def display_status(self):
-        return (self.status or 'PRESENT').replace('_', ' ').title()
-
-    def __repr__(self):
-        return f"<AttendanceRecord student_id={self.student_id} date='{self.date}' status='{self.status}'>"
-
-
-class LeaveRequest(db.Model):
-    """
-    Leave application and approval tracking (Phase 2 Module 9).
-    """
-    __tablename__ = 'leave_requests'
-
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id', ondelete='CASCADE'), nullable=False, index=True)
-    internship_id = db.Column(db.Integer, db.ForeignKey('internships.id', ondelete='CASCADE'), nullable=False, index=True)
-    leave_type = db.Column(db.String(30), nullable=False) # SICK_LEAVE, CASUAL_LEAVE, ACADEMIC_LEAVE, EMERGENCY_LEAVE
-    start_date = db.Column(db.Date, nullable=False, index=True)
-    end_date = db.Column(db.Date, nullable=False, index=True)
-    days_count = db.Column(db.Integer, default=1, nullable=False)
-    reason = db.Column(db.Text, nullable=False)
-    supporting_document_path = db.Column(db.String(255), nullable=True)
-    status = db.Column(db.String(20), default='PENDING', nullable=False) # PENDING, APPROVED, REJECTED, CANCELLED
-    reviewer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    reviewed_at = db.Column(db.DateTime, nullable=True)
-    reviewer_remarks = db.Column(db.Text, nullable=True)
-    cancellation_reason = db.Column(db.Text, nullable=True)
-    cancelled_at = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    student = db.relationship('Student', back_populates='leave_requests')
-    internship = db.relationship('Internship', back_populates='leave_requests')
-    reviewer = db.relationship('User', foreign_keys=[reviewer_id])
-
-    @property
-    def display_type(self):
-        return (self.leave_type or 'CASUAL_LEAVE').replace('_', ' ').title()
-
-    @property
-    def is_pending(self):
-        return self.status == 'PENDING'
-
-    @property
-    def is_approved(self):
-        return self.status == 'APPROVED'
-
-    @property
-    def is_rejected(self):
-        return self.status == 'REJECTED'
-
-    @property
-    def is_cancelled(self):
-        return self.status == 'CANCELLED'
-
-    def __repr__(self):
-        return f"<LeaveRequest student_id={self.student_id} type='{self.leave_type}' {self.start_date}->{self.end_date} status='{self.status}'>"
-
-
-class AttendancePolicy(db.Model):
-    """
-    Configurable organizational attendance policy and thresholds (Phase 2 Module 9).
-    """
-    __tablename__ = 'attendance_policies'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), default='Anti-Matrix Standard Engineering Attendance Policy', nullable=False)
-    work_start_time = db.Column(db.String(10), default='09:00', nullable=False) # HH:MM (24-hour)
-    work_end_time = db.Column(db.String(10), default='17:00', nullable=False)   # HH:MM
-    late_threshold_time = db.Column(db.String(10), default='09:30', nullable=False) # Check-in after this is marked LATE
-    half_day_min_hours = db.Column(db.Float, default=4.0, nullable=False)      # Worked < 4 hours is HALF_DAY
-    full_day_min_hours = db.Column(db.Float, default=7.0, nullable=False)      # Worked >= 7 hours is full PRESENT
-    weekly_working_days = db.Column(db.String(50), default='MON,TUE,WED,THU,FRI', nullable=False) # Comma-separated
-    min_attendance_percentage = db.Column(db.Float, default=80.0, nullable=False) # Minimum threshold for completion
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-
-    updater = db.relationship('User', foreign_keys=[updated_by])
-
-    def get_working_days_list(self):
-        return [d.strip().upper() for d in self.weekly_working_days.split(',') if d.strip()]
-
-    def __repr__(self):
-        return f"<AttendancePolicy name='{self.name}' active={self.is_active}>"
-
-
-class CompanyHoliday(db.Model):
-    """
-    Official company and national holiday calendar (Phase 2 Module 9).
-    """
-    __tablename__ = 'company_holidays'
-
-    id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.Date, unique=True, nullable=False, index=True)
-    name = db.Column(db.String(150), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    is_optional = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    @property
-    def holiday_date(self):
-        return self.date
-
-    @holiday_date.setter
-    def holiday_date(self, value):
-        self.date = value
-
-    def __repr__(self):
-        return f"<CompanyHoliday date='{self.date}' name='{self.name}'>"
-
 

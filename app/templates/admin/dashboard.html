@@ -1,524 +1,137 @@
 {% extends 'admin/base_admin.html' %}
 
-{% block title %}Admin Operations & Intelligence Dashboard — ANTI MATRIX{% endblock %}
-{% block breadcrumb %}Operations Dashboard{% endblock %}
+{% block title %}Admin Dashboard — ANTI MATRIX{% endblock %}
 
 {% block content %}
-<div class="admin-dashboard-container">
-
-  <!-- Executive Header & Quick Actions -->
-  <div class="dashboard-exec-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.35rem;">
-        <span class="badge badge-success" style="font-size: 0.7rem; font-weight: 700; padding: 0.25rem 0.65rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: #10B981; box-shadow: 0 0 6px #10B981;"></span>
-          LIVE TELEMETRY ACTIVE
-        </span>
-        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">
-          Anti-Matrix Enterprise Workspace v2.0
-        </span>
-      </div>
-      <h1 style="font-size: 1.65rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.25rem; letter-spacing: -0.02em;">
-        Operations & Workforce Command Center
-      </h1>
-      <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">
-        Workforce telemetry, real-time project allocations, mentor supervision workloads & submission evaluations
-      </p>
-    </div>
-
-    <!-- Quick Action Bar -->
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-      <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-        Create Intern
-      </a>
-      <a href="{{ url_for('admin.assign_tasks') }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        Assign Project
-      </a>
-      <a href="{{ url_for('admin.upload_tasks') }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Upload Tasks
-      </a>
-      <a href="{{ url_for('admin.create_project') }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Create Project
-      </a>
-      <a href="{{ url_for('admin.evaluations') }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Review Submissions
-      </a>
-    </div>
+<div>
+  <!-- Page Header -->
+  <div style="margin-bottom: 1.75rem;">
+    <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.2rem;">
+      Admin Operations Dashboard
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">
+      Real-time workforce, project allocation & milestone evaluation telemetry
+    </p>
   </div>
 
-  <!-- 1. EXACT 6 KPI CARDS -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+  <!-- Metric Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.75rem;">
 
-    <!-- Total Interns -->
     <div class="stat-card">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="stat-label">TOTAL INTERNS</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </div>
+      <div class="stat-label">Total Interns</div>
       <div class="stat-value">{{ total_employees }}</div>
-      <div style="font-size: 0.725rem; color: var(--text-muted);">
-        Enrolled candidates
-      </div>
     </div>
 
-    <!-- Active Interns -->
     <div class="stat-card">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="stat-label">ACTIVE INTERNS</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-      </div>
+      <div class="stat-label">Active Cohort</div>
       <div class="stat-value" style="color: var(--brand-primary);">{{ active_interns }}</div>
-      <div style="font-size: 0.725rem; color: var(--text-muted);">
-        Active working cohort
-      </div>
     </div>
 
-    <!-- Completed Internships -->
     <div class="stat-card">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="stat-label">COMPLETED INTERNSHIPS</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      </div>
-      <div class="stat-value">{{ completed_interns }}</div>
-      <div style="font-size: 0.725rem; color: var(--text-muted);">
-        Graduated interns
-      </div>
+      <div class="stat-label">Master Projects</div>
+      <div class="stat-value">{{ total_projects }}</div>
     </div>
 
-    <!-- Total Mentors -->
     <div class="stat-card">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="stat-label">TOTAL MENTORS</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <div class="stat-value" style="color: var(--brand-primary);">{{ total_mentors }}</div>
-      <div style="font-size: 0.725rem; color: var(--text-muted);">
-        Approved senior mentors
-      </div>
+      <div class="stat-label">Assigned Projects</div>
+      <div class="stat-value" style="color: var(--text-main);">{{ assigned_projects }}</div>
     </div>
 
-    <!-- Active Projects -->
     <div class="stat-card">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="stat-label">ACTIVE PROJECTS</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      <div class="stat-label">Pending Reviews</div>
+      <div class="stat-value" style="color: var(--warning);">{{ pending_submissions }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Evaluations Scheduled</div>
+      <div class="stat-value" style="color: var(--info);">{{ scheduled_meetings }}</div>
+    </div>
+
+  </div>
+
+  <!-- Quick Actions -->
+  <div style="display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Create Employee
+    </a>
+    <a href="{{ url_for('admin.upload_tasks') }}" class="btn btn-secondary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Tasks
+    </a>
+    <a href="{{ url_for('admin.create_project') }}" class="btn btn-secondary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Create Project
+    </a>
+    <a href="{{ url_for('admin.assign_tasks') }}" class="btn btn-secondary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Assign Tasks
+    </a>
+    <a href="{{ url_for('admin.evaluations') }}" class="btn btn-secondary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Review Submissions
+    </a>
+  </div>
+
+  <!-- Two Column: Recent Employees + Pending Submissions -->
+  <div class="grid-2">
+
+    <!-- Recent Employees -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">Recent Onboarded Interns</h3>
+        <a href="{{ url_for('admin.employees_list') }}" class="btn btn-secondary btn-sm">View All</a>
       </div>
-      <div class="stat-value">{{ active_projects_count }}</div>
-      <div style="font-size: 0.725rem; color: var(--text-muted);">
-        Available project tracks
+      <div>
+        {% for student in recent_students %}
+        <a href="{{ url_for('admin.employee_detail', student_id=student.id) }}" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-subtle); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-main)'" onmouseout="this.style.background='transparent'">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-50); border: 1px solid var(--brand-primary-200); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; color: var(--brand-primary); flex-shrink: 0;">
+            {{ student.user.full_name[:1] }}
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ student.user.full_name }}</div>
+            <div style="font-size: 0.725rem; color: var(--text-muted); font-family: var(--font-mono);">{{ student.student_uid }}</div>
+          </div>
+          {% set internship = student.active_internship %}
+          <span class="badge {% if internship and internship.status == 'ACTIVE' %}badge-success{% else %}badge-neutral{% endif %}">
+            {{ internship.status if internship else 'NO INTERNSHIP' }}
+          </span>
+        </a>
+        {% else %}
+        <div style="padding: 2rem 1.25rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+          No employees enrolled yet.
+        </div>
+        {% endfor %}
       </div>
     </div>
 
     <!-- Pending Submissions -->
-    <div class="stat-card">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="stat-label">PENDING SUBMISSIONS</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{% if pending_submissions > 0 %}var(--warning){% else %}var(--brand-primary){% endif %}" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">Milestones Awaiting Review</h3>
+        <a href="{{ url_for('admin.evaluations') }}" class="btn btn-secondary btn-sm">Review All</a>
       </div>
-      <div class="stat-value" style="color: {% if pending_submissions > 0 %}var(--warning){% else %}var(--brand-primary){% endif %};">
-        {{ pending_submissions }}
-      </div>
-      <div style="font-size: 0.725rem; color: var(--text-muted);">
-        {% if pending_submissions > 0 %}Awaiting review{% else %}Queue is caught up{% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  <!-- 2. INTERNSHIP ANALYTICS -->
-  <div style="margin-bottom: 2rem;">
-    <div style="margin-bottom: 1rem;">
-      <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.2rem;">
-        Internship Analytics
-      </h2>
-      <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
-        Workforce progression, task completion velocity, project allocations and review turnaround statistics
-      </p>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
-
-      <!-- A. Weekly Task Completion Chart -->
-      <div class="card" style="padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin: 0;">
-            Weekly Task Completion
-          </h3>
-          <span class="badge badge-neutral" style="font-size: 0.7rem;">Weeks 1 – 4</span>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-          {% for ws in weekly_task_stats %}
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.775rem; margin-bottom: 0.25rem;">
-              <span style="font-weight: 600; color: var(--text-main);">Week {{ ws.week }}</span>
-              <span style="color: var(--text-muted);">{{ ws.completed }} / {{ ws.total }} tasks ({{ ws.rate }}%)</span>
-            </div>
-            <div style="width: 100%; height: 7px; background: #E2E8F0; border-radius: 999px; overflow: hidden;">
-              <div style="width: {{ ws.rate }}%; height: 100%; background: linear-gradient(90deg, #10B981 0%, #A6FD3A 100%);"></div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- B. Internship Progress Distribution -->
-      <div class="card" style="padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin: 0;">
-            Progress Distribution
-          </h3>
-          <span class="badge badge-neutral" style="font-size: 0.7rem;">Active Cohort</span>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-          <div style="padding: 0.75rem; background: var(--bg-main); border: 1px solid var(--border-subtle); border-radius: 8px;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">0% – 25%</div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0.2rem 0;">{{ progress_distribution['0_25'] }}</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted);">Initial Onboarding</div>
-          </div>
-          <div style="padding: 0.75rem; background: var(--bg-main); border: 1px solid var(--border-subtle); border-radius: 8px;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">26% – 50%</div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0.2rem 0;">{{ progress_distribution['26_50'] }}</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted);">Core Sprints</div>
-          </div>
-          <div style="padding: 0.75rem; background: var(--bg-main); border: 1px solid var(--border-subtle); border-radius: 8px;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">51% – 75%</div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0.2rem 0;">{{ progress_distribution['51_75'] }}</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted);">Advanced Testing</div>
-          </div>
-          <div style="padding: 0.75rem; background: var(--bg-main); border: 1px solid var(--border-subtle); border-radius: 8px;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">76% – 100%</div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: var(--brand-primary); margin: 0.2rem 0;">{{ progress_distribution['76_100'] }}</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted);">Evaluation Ready</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- C. Project Allocation Statistics -->
-      <div class="card" style="padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin: 0;">
-            Project Allocation Stats
-          </h3>
-          <span class="badge badge-success" style="font-size: 0.7rem;">{{ allocation_stats['allocation_rate'] }}% Allocated</span>
-        </div>
-        <div style="margin-bottom: 1rem;">
-          <div style="display: flex; justify-content: space-between; font-size: 0.775rem; margin-bottom: 0.35rem;">
-            <span>Allocated: <strong>{{ allocation_stats['allocated_count'] }}</strong></span>
-            <span>Unallocated: <strong>{{ allocation_stats['unallocated_count'] }}</strong></span>
-          </div>
-          <div style="width: 100%; height: 8px; background: #E2E8F0; border-radius: 999px; overflow: hidden; display: flex;">
-            <div style="width: {{ allocation_stats['allocation_rate'] }}%; background: #10B981;"></div>
-          </div>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
-          All active interns are mapped to structured project curricula with designated milestone roadmaps.
-        </div>
-      </div>
-
-      <!-- D. Submission Review Statistics -->
-      <div class="card" style="padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin: 0;">
-            Review Pipeline Stats
-          </h3>
-          <span class="badge badge-neutral" style="font-size: 0.7rem;">Evaluations</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; text-align: center;">
-          <div style="flex: 1; padding: 0.65rem 0.4rem; background: var(--bg-main); border-radius: 6px; border: 1px solid var(--border-subtle);">
-            <div style="font-size: 1.15rem; font-weight: 800; color: var(--brand-primary);">{{ submission_review_stats['approved'] }}</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600;">Approved</div>
-          </div>
-          <div style="flex: 1; padding: 0.65rem 0.4rem; background: var(--bg-main); border-radius: 6px; border: 1px solid var(--border-subtle);">
-            <div style="font-size: 1.15rem; font-weight: 800; color: var(--warning);">{{ submission_review_stats['pending'] }}</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600;">In Review</div>
-          </div>
-          <div style="flex: 1; padding: 0.65rem 0.4rem; background: var(--bg-main); border-radius: 6px; border: 1px solid var(--border-subtle);">
-            <div style="font-size: 1.15rem; font-weight: 800; color: var(--danger);">{{ submission_review_stats['redo'] }}</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600;">Revisions</div>
-          </div>
-        </div>
-        <div style="margin-top: 0.85rem; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
-          Approval Rate: <strong>{{ submission_review_stats['approval_rate'] }}%</strong>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- 3. TWO-COLUMN WORKSPACE: UPCOMING DEADLINES & RECENT ACTIVITY -->
-  <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; margin-bottom: 2rem; align-items: start;">
-
-    <!-- LEFT: UPCOMING DEADLINES -->
-    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card);">
-      <div style="padding: 1.15rem 1.35rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 0.65rem;">
-          <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">
-            Upcoming Deadlines
-          </h3>
-          <span class="badge badge-neutral" style="font-size: 0.75rem;">{{ upcoming_deadlines|length }} Next</span>
-        </div>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">Sorted by due date</span>
-      </div>
-
-      <div class="table-responsive" style="overflow-x: auto;">
-        <table class="table" style="width: 100%; border-collapse: collapse; margin: 0; font-size: 0.825rem;">
-          <thead>
-            <tr style="border-bottom: 1px solid var(--border-subtle); background: var(--bg-main); color: var(--text-muted); text-align: left; font-size: 0.725rem; text-transform: uppercase; letter-spacing: 0.05em;">
-              <th style="padding: 0.75rem 1.35rem;">Intern Name & ID</th>
-              <th style="padding: 0.75rem 1rem;">Project & Milestone</th>
-              <th style="padding: 0.75rem 1rem;">Deadline</th>
-              <th style="padding: 0.75rem 1.35rem; text-align: right;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for ud in upcoming_deadlines %}
-            {% set st = ud.assignment.internship.student if ud.assignment and ud.assignment.internship else None %}
-            {% set pj = ud.assignment.project if ud.assignment else None %}
-            <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s;" onmouseover="this.style.background='var(--bg-main)'" onmouseout="this.style.background='transparent'">
-              <td style="padding: 0.85rem 1.35rem;">
-                <div style="font-weight: 700; color: var(--text-main);">{{ st.user.full_name if st and st.user else 'Intern' }}</div>
-                <div style="font-size: 0.725rem; color: var(--text-muted); font-family: var(--font-mono);">{{ st.student_uid if st else '—' }}</div>
-              </td>
-              <td style="padding: 0.85rem 1rem;">
-                <div style="font-weight: 600; color: var(--text-main);">Week {{ ud.week_number }}: {{ ud.title[:35] }}{% if ud.title|length > 35 %}...{% endif %}</div>
-                <div style="font-size: 0.725rem; color: var(--text-muted);">{{ pj.project_code if pj else '—' }}</div>
-              </td>
-              <td style="padding: 0.85rem 1rem; white-space: nowrap;">
-                <div style="color: var(--text-main); font-weight: 600;">{{ ud.due_at.strftime('%d %b %Y') if ud.due_at else 'TBD' }}</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted);">{{ ud.due_at.strftime('%I:%M %p') if ud.due_at else '' }}</div>
-              </td>
-              <td style="padding: 0.85rem 1.35rem; text-align: right;">
-                <span class="badge {% if ud.status == 'AVAILABLE' %}badge-neutral{% elif ud.status == 'IN_PROGRESS' %}badge-info{% elif ud.status == 'SUBMITTED' %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 0.7rem;">
-                  {{ ud.status }}
-                </span>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="4" style="padding: 2rem 1.35rem; text-align: center; color: var(--text-muted);">
-                No upcoming deadlines recorded.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- RIGHT: RECENT ACTIVITY FEED -->
-    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card);">
-      <div style="padding: 1.15rem 1.35rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 0.65rem;">
-          <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">
-            Recent Activity
-          </h3>
-          <span class="badge badge-success" style="font-size: 0.7rem;">Live</span>
-        </div>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">Chronological</span>
-      </div>
-
-      <div style="padding: 0.5rem 0;">
-        {% for act in recent_activities %}
-        <div style="padding: 0.75rem 1.35rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: flex-start; gap: 0.75rem; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-main)'" onmouseout="this.style.background='transparent'">
-          <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-main); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;">
-            {% if act.type == 'registration' %}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/></svg>
-            {% elif act.type == 'allocation' %}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            {% elif act.type == 'mentor' %}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            {% else %}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            {% endif %}
-          </div>
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-weight: 700; font-size: 0.825rem; color: var(--text-main); line-height: 1.3;">
-              {{ act.title }}
-            </div>
-            <div style="font-size: 0.725rem; color: var(--text-muted); margin-top: 0.15rem;">
-              {{ act.detail }}
-            </div>
-            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem; font-family: var(--font-mono);">
-              {{ act.timestamp.strftime('%d %b, %I:%M %p') if act.timestamp else 'Just now' }}
-            </div>
-          </div>
-        </div>
-        {% else %}
-        <div style="padding: 2rem 1.35rem; text-align: center; color: var(--text-muted); font-size: 0.825rem;">
-          No recent activity recorded yet.
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-  </div>
-
-  <!-- 4. PROJECT OVERVIEW TABLE -->
-  <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card); margin-bottom: 2rem;">
-    <div style="padding: 1.15rem 1.35rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
-      <div>
-        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.15rem;">
-          Project Overview
-        </h3>
-        <p style="font-size: 0.775rem; color: var(--text-muted); margin: 0;">
-          Allocated intern headcounts, assigned faculty mentors and milestone completion percentages
-        </p>
-      </div>
-      <a href="{{ url_for('admin.projects_list') }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
-        View Master Projects →
-      </a>
-    </div>
-
-    <div class="table-responsive" style="overflow-x: auto;">
-      <table class="table" style="width: 100%; border-collapse: collapse; margin: 0; font-size: 0.825rem;">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--border-subtle); background: var(--bg-main); color: var(--text-muted); text-align: left; font-size: 0.725rem; text-transform: uppercase; letter-spacing: 0.05em;">
-            <th style="padding: 0.75rem 1.35rem;">Project Code & Name</th>
-            <th style="padding: 0.75rem 1rem;">Allocated Interns</th>
-            <th style="padding: 0.75rem 1rem;">Assigned Mentors</th>
-            <th style="padding: 0.75rem 1rem; width: 180px;">Completion Rate</th>
-            <th style="padding: 0.75rem 1.35rem; text-align: right;">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for po in projects_overview %}
-          <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s;" onmouseover="this.style.background='var(--bg-main)'" onmouseout="this.style.background='transparent'">
-            <td style="padding: 0.85rem 1.35rem;">
-              <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.15rem;">
-                <span style="font-size: 0.7rem; font-weight: 700; font-family: var(--font-mono); color: var(--brand-primary); background: var(--primary-50); padding: 0.1rem 0.35rem; border-radius: 4px; border: 1px solid var(--brand-primary-200);">
-                  {{ po.code }}
-                </span>
-                <span class="badge badge-neutral" style="font-size: 0.68rem;">{{ po.domain }}</span>
-              </div>
-              <div style="font-weight: 700; color: var(--text-main);">
-                {{ po.name }}
-              </div>
-            </td>
-            <td style="padding: 0.85rem 1rem;">
-              <strong>{{ po.allocated_interns }}</strong> Intern{% if po.allocated_interns != 1 %}s{% endif %}
-            </td>
-            <td style="padding: 0.85rem 1rem;">
-              {% for m_name in po.assigned_mentors %}
-              <div style="font-weight: 600; color: var(--text-main); font-size: 0.8rem;">{{ m_name }}</div>
-              {% endfor %}
-            </td>
-            <td style="padding: 0.85rem 1rem;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.725rem; margin-bottom: 0.25rem;">
-                <span style="font-weight: 700; color: var(--text-main);">{{ po.completion_pct }}%</span>
-              </div>
-              <div style="width: 100%; height: 6px; background: #E2E8F0; border-radius: 999px; overflow: hidden;">
-                <div style="width: {{ po.completion_pct }}%; height: 100%; background: linear-gradient(90deg, #10B981 0%, #A6FD3A 100%);"></div>
-              </div>
-            </td>
-            <td style="padding: 0.85rem 1.35rem; text-align: right;">
-              <span class="badge {% if po.status == 'Active' %}badge-success{% else %}badge-neutral{% endif %}" style="font-size: 0.7rem;">
-                {{ po.status }}
-              </span>
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="5" style="padding: 2rem 1.35rem; text-align: center; color: var(--text-muted);">
-              No projects cataloged in the system.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 5. MENTOR WORKLOAD & SUBMISSION REVIEW QUEUE SUMMARY -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start;">
-
-    <!-- Approved Mentors Workload -->
-    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card);">
-      <div style="padding: 1.15rem 1.35rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 0.65rem;">
-          <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">
-            Mentor Workload Tracker
-          </h3>
-          <span class="badge badge-neutral" style="font-size: 0.75rem;">{{ total_mentors }} Faculty</span>
-        </div>
-        <span style="font-size: 0.75rem; color: var(--brand-primary); font-weight: 600;">Approved</span>
-      </div>
-
-      <div>
-        {% for mw in mentor_workloads %}
-        <div style="padding: 0.85rem 1.35rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-main)'" onmouseout="this.style.background='transparent'">
-          <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-50); border: 1px solid var(--brand-primary-200); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; color: var(--brand-primary); flex-shrink: 0;">
-              {{ mw.name[:1] }}
-            </div>
-            <div>
-              <div style="font-weight: 700; font-size: 0.825rem; color: var(--text-main);">
-                {{ mw.name }}
-              </div>
-              <div style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono);">
-                {{ mw.email }}
-              </div>
-            </div>
-          </div>
-          <div style="text-align: right;">
-            <span class="badge {{ mw.status_badge }}" style="font-size: 0.68rem; margin-bottom: 0.15rem; display: inline-block;">
-              {{ mw.workload_status }}
-            </span>
-            <div style="font-size: 0.7rem; color: var(--text-muted);">
-              <strong>{{ mw.assigned_count }}</strong> assigned intern{% if mw.assigned_count != 1 %}s{% endif %}
-            </div>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Submission Review Queue Summary -->
-    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-card);">
-      <div style="padding: 1.15rem 1.35rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 0.65rem;">
-          <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">
-            Submission Review Queue
-          </h3>
-          <span class="badge {% if pending_submissions > 0 %}badge-warning{% else %}badge-neutral{% endif %}" style="font-size: 0.75rem;">
-            {{ pending_submissions }} Pending
-          </span>
-        </div>
-        <a href="{{ url_for('admin.evaluations') }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">All Evaluations →</a>
-      </div>
-
       <div>
         {% for sub in pending_sub_list %}
-        <div style="padding: 0.85rem 1.35rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-main)'" onmouseout="this.style.background='transparent'">
-          <div>
-            <div style="font-weight: 700; font-size: 0.825rem; color: var(--text-main);">
-              {{ sub.student.user.full_name }} ({{ sub.student.student_uid }})
-            </div>
-            <div style="font-size: 0.725rem; color: var(--text-muted);">
-              Week {{ sub.milestone.week_number }}: {{ sub.milestone.title }}
-            </div>
+        <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem;">
+            <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-main);">
+              {{ sub.student.user.full_name }}
+            </span>
+            <span class="badge badge-warning">SUBMITTED</span>
           </div>
-          <div>
-            <a href="{{ url_for('admin.employee_tasks') }}" class="btn btn-primary btn-sm" style="font-size: 0.725rem; padding: 0.3rem 0.65rem;">
-              Review →
-            </a>
+          <div style="font-size: 0.775rem; color: var(--text-muted);">
+            Week {{ sub.milestone.week_number }} — {{ sub.milestone.assignment.project.title[:40] }}{% if sub.milestone.assignment.project.title|length > 40 %}...{% endif %}
           </div>
         </div>
         {% else %}
-        <div style="padding: 2.25rem 1.35rem; text-align: center; color: var(--text-muted); font-size: 0.825rem;">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" style="margin-bottom: 0.35rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <div style="font-weight: 600; color: var(--text-main); margin-bottom: 0.1rem;">All Caught Up</div>
-          <div>No deliverables currently awaiting mentor review.</div>
+        <div style="padding: 2rem 1.25rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+          No pending submissions. All caught up!
         </div>
         {% endfor %}
       </div>
     </div>
 
   </div>
-
 </div>
 {% endblock %}

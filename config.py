@@ -191,13 +191,3 @@ class Config:
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@antimatrix.ai').strip()
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin@AntiMatrix2026!')
 
-    # Email / SMTP Configuration (Module 7: Automated Notifications & Communication)
-    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-    MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').strip().lower() in ('1', 'true', 'yes')
-    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').strip().lower() in ('1', 'true', 'yes')
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME', '')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'Anti-Matrix Portal <notifications@antimatrix.tech>')
-    MAIL_SUPPRESS_SEND = os.environ.get('MAIL_SUPPRESS_SEND', 'false').strip().lower() in ('1', 'true', 'yes')
-
