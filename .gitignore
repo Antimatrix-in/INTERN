@@ -20,12 +20,4 @@ env/
 venv/
 node_modules/
 client/
-backups/
-*.dump
-*.sql
-*.sql.gz
-*.tar.gz
-*.lock
-.deploy.lock
-
 
